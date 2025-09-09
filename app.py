@@ -1,0 +1,533 @@
+from flask import Flask, render_template, request 
+from flask import redirect, url_for, session, make_response, flash
+from flask_mysqldb import MySQL
+import re
+import os
+import random
+from werkzeug.utils import secure_filename
+import MySQLdb.cursors
+from datetime import datetime
+from werkzeug.security import generate_password_hash,check_password_hash
+
+now = datetime.now()
+
+def generate_otp():
+	return str(random.randint(100000,999999))
+
+# def is_valid_email(email):
+# 	pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+# 	return re.match(pattern,email) is not None
+
+app = Flask(__name__)
+
+app.secret_key = "supersecretkey"
+
+
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'RajMangal'
+app.config['MYSQL_PASSWORD'] = 'raj12345'
+app.config['MYSQL_DB'] = 'pet_adoption_system_database'
+
+mysql = MySQL(app)
+
+UPLOAD_FOLDER = os.path.join('static','uploads') 
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+ALLOWED_EXTENSIONS = {'png','jpg','jpeg','gif'}
+
+def allowed_file(filename):
+	return '.' in filename and \
+		filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route("/")
+def home():
+	return render_template("index.html")
+
+@app.route('/registration', methods=['GET','POST'])
+def registration():
+
+	if request.method == 'POST':
+		if 'generate_otp' in request.form: 				#if otp button in form.
+			username = request.form['username']
+			email = request.form['email']
+			phone = request.form['phone']
+			address = request.form['address']
+			city = request.form['city']
+			password = request.form['password']
+			created_at = datetime.now()
+
+			if not all([username, email, phone, address, city, password]):
+				flash("Please fill all field before generating OTP.", "danger")
+				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
+			
+			if not re.match(r'^[A-Za-z0-9]+$',username) or not (5 <= len(username) <= 10) or not (re.search(r'[A-Za-z]',username) and re.search(r'\d',username)) or re.search(r'(.)\1\1',username):
+				flash("Username must be 5-10 characters with at least 1 letter and 1 number, and no repeating characters thrice.", "danger")
+				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
+			
+			email_regex = r"^(?!.*\.\.)(?!.*\.$)[a-zA-Z0-9._%+-]{3,15}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+			if (
+				not re.match(email_regex,email) 
+				or email.count('@') !=1 
+				or email.startswith('@') 
+				or len(email.split('@')[0]) > 15
+				) :
+				flash("Invalid email address", "danger")
+				return render_template('registration.html', username=username,email=email,phone=phone,address=address,city=city,password=password)
+			
+			if not re.match(r'^[6-9]\d{9}$', phone):
+				flash("Invalid phone no, Please enter valid phone number","danger")
+				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
+			
+			if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,12}$",password):
+				flash("password must be 6-12 digit long, contain atleast 1 letter, 1 number and 1 special character","danger")
+				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
+			
+			
+			cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+			cur.execute("SELECT * FROM user_table WHERE name=%s OR email=%s", (username,email))
+			existing_user = cur.fetchone()
+			cur.close()
+		
+			if existing_user:
+				if existing_user['name'] == username:
+					flash("Account with this username already exists","danger")
+				elif existing_user['email'] == email:
+					flash("Email id is already in use with another account","danger")
+				return render_template('registration.html',username=username, email=email, phone=phone, address=address, city=city, password=password) 
+
+			otp = generate_otp()
+			session['register_data'] = {'username': username, 'email' : email, 'phone' : phone, 
+			'address' : address, 'city' : city, 'password' : password, 'otp' : otp, 'created_at' : created_at
+			}
+
+			print(f" OTP for Registration: {otp}")
+			flash("OTP sent successfully on terminal","info")
+			return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
+
+		elif request.form.get('otp'):
+			entered_otp = request.form['otp']
+			data_stored_in_session = session.get('register_data')
+
+			if data_stored_in_session and data_stored_in_session['otp'] == entered_otp:
+				username = data_stored_in_session.get('username')
+				email = data_stored_in_session.get('email')
+				phone = data_stored_in_session.get('phone')
+				address = data_stored_in_session.get('address')
+				city = data_stored_in_session.get('city')
+				password = data_stored_in_session.get('password')
+				created_at = data_stored_in_session.get('created_at')
+
+				cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+				hashed_password = generate_password_hash(password)
+				cur.execute(
+        		      "INSERT INTO user_table(name,phone,email,password,address,city,created_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+        		      (username,phone,email,hashed_password,address,city,created_at))
+				mysql.connection.commit()
+				cur.close()
+
+
+				session.pop('register_data',None)
+				flash("Registration Successful! Please login.", "success")
+				return redirect(url_for('login'))
+			
+			else:
+				flash("Invalid OTP","danger")
+				return render_template('registration.html', username=username,email=email,phone=phone,address=address,city=city,password=password)
+	return render_template("registration.html")
+
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+	msg = ''		
+	# print("request form: ",request.form)
+	if request.method == 'POST':
+		try:
+			username = request.form['username']
+			email = request.form['email']
+			password = request.form['password']
+			print("username: ",username)
+			print("email: ",email)
+			print("password: ",password)
+			cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+			cur.execute('SELECT * FROM user_table WHERE name = %s AND email = %s',(username,email))
+			user = cur.fetchone()
+			if user and check_password_hash(user['password'],password):
+				session['loggedin'] = True
+				session['user_id'] = user['user_id']
+				session['name'] = user['name']
+				session['city'] = user['city']
+				msg="logged in successfully"
+				print(msg)
+				return redirect(url_for('dashboard'))
+			else:
+				msg = 'Incorrect username/email/password!!'
+		except Exception as e:
+			print("Error: ",str(e))
+	return render_template("login_page.html",msg=msg)
+
+
+@app.route('/forgot_pass',methods=["POST","GET"])
+def forgot_password():
+	msg = ''
+	if request.method == 'POST'
+	email = request.form['email']
+
+@app.route("/dash")
+def dashboard():
+	if 'user_id' not in session:
+		return redirect(url_for('login'))
+
+	if 'name' in session:
+		cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+		cur.execute("""
+		SELECT cr.request_id, cr.status, p.pet_id, p.category AS pet_category, u.user_id AS adopter_id,
+		u.name AS adopter_name, u.phone AS adopter_phone, u.city AS adopter_city FROM call_request_table cr
+		JOIN pet_table p ON p.pet_id = cr.pet_id JOIN user_table u ON u.user_id = cr.user_id
+		LEFT JOIN transaction_table t on cr.pet_id = t.pet_id AND t.status = 'completed' or t.status = 'Rejected'    
+		WHERE p.user_id = %s AND t.tr_id IS NULL order by cr.request_id desc""", (session['user_id'],))
+		
+		call_requests = cur.fetchall()
+		
+		cur.close()
+		return render_template(
+			"dashboard.html",
+			username=session.get("name"),
+			call_requests=call_requests
+		)
+
+@app.route('/logout')
+def logout():
+	session.clear()
+	response = make_response(redirect(url_for('login')))
+	response.headers['Cache-Control'] = 'no-cache, no_store, must_revalidate'
+	response.headers['Pragma'] = 'no-cache'
+	response.headers['Expires'] = '0'
+	return response
+	# return'<script>window.history.forward()</script>'
+
+
+@app.route('/donate', methods=['GET', 'POST'])
+def donate():
+	if 'user_id' not in session:
+		return redirect(url_for('login'))
+
+	if request.method == 'POST':
+		pet_category = request.form['pet_category']
+		pet_breed = request.form['pet_breed']
+		pet_name = request.form['pet_name']
+		pet_age = request.form['pet_age']
+		pet_weight = request.form['pet_weight']
+		pet_desc = request.form['pet_desc']
+		added_at = datetime.now()
+		pet_image = request.files['pet_image']
+
+		if pet_image and allowed_file(pet_image.filename):
+			filename = secure_filename(pet_image.filename)
+			filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+			os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+			pet_image.save(filepath)
+			image_db_path = f"uploads/{filename}"
+		else:
+			image_db_path = None
+			flash("please upload valid image")
+			return redirect(url_for('donate'))
+
+		if not all([pet_name,pet_category,pet_breed,pet_age,pet_weight,pet_desc,pet_image]):
+			flash(f"{session.get('name')}Please fill all field.")
+			return render_template('donate.html',pet_name=pet_name,pet_category=pet_category,pet_breed=pet_breed,pet_age=pet_age,pet_weight=pet_weight,pet_desc=pet_desc,pet_image=pet_image)
+
+		if not (len(pet_name) <=12): #or not re.search(r'([A-Za-z])\1\1\1', pet_name):
+			flash("pet's name would be maximum up to 12 characters and valid.")
+			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_age=pet_age,pet_weight=pet_weight,pet_desc=pet_desc,pet_image=pet_image) 
+		
+		cur = mysql.connection.cursor()
+		cur.execute("""
+			INSERT INTO pet_table
+			(name,category,breed,age,weight,pet_description,added_at,image, user_id) 
+			VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+			""",(pet_name,pet_category,pet_breed,pet_age,
+				pet_weight,pet_desc,added_at,
+				image_db_path, session.get('user_id')))
+		mysql.connection.commit()
+		return redirect(url_for('dashboard'))
+
+	return render_template("donate.html",username=session.get("name"))
+
+@app.route('/adopt')
+def adopt():
+
+	if 'user_id' not in session:
+		return redirect(url_for('login'))
+	
+	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+	cur.execute("""SELECT p.*,u.name AS donor_name,(SELECT COUNT(*) 
+                FROM call_request_table cr WHERE cr.pet_id = p.pet_id 
+                AND cr.user_id = %s) AS already_requested FROM pet_table p
+                LEFT JOIN user_table u ON u.user_id = p.user_id
+                WHERE p.user_id != %s AND p.pet_id NOT IN (SELECT pet_id 
+                FROM transaction_table WHERE status = 'completed')""",
+                (session['user_id'],session['user_id']))
+	pets = cur.fetchall()
+	cur.close()
+
+	return render_template('adopt.html',username = session.get('name'), city=session.get("city"), pets=pets)
+
+@app.route('/create_call_request/<int:pet_id>',methods=['POST'])
+def create_call_request(pet_id):
+	if 'user_id' not in session:
+		return redirect(url_for('login'))
+		
+	cur = mysql.connection.cursor()
+
+	cur.execute('Insert into call_request_table(pet_id,user_id,status) VALUES (%s,%s,%s)',
+			 (pet_id, session['user_id'],'pending'	))
+	mysql.connection.commit()
+	cur.close()
+	return redirect(url_for('adopt'))
+
+@app.route('/cancel_request/<int:pet_id>',methods=['POST'])
+def cancel_request(pet_id):
+	if 'user_id' not in session:
+		return redirect(url_for('login'))
+
+	cur = mysql.connection.cursor()
+
+	cur.execute("DELETE FROM call_request_table WHERE pet_id = %s AND user_id = %s",(pet_id,session['user_id']))
+	mysql.connection.commit()
+	cur.close()
+
+	flash("Adoption request cancelled !","info")
+	return redirect(url_for('adopt'))
+
+@app.route('/call_request/<int:request_id>/decide',methods=['POST'])
+def decide_call_request(request_id):
+
+	if 'user_id' not in session:
+		return redirect(url_for('login'))
+
+	decision = request.form.get('decision')
+
+	cur = mysql.connection.cursor()
+	
+	cur.execute("UPDATE call_request_table SET status=%s WHERE request_id=%s",(decision,request_id))
+	
+	mysql.connection.commit()
+	
+	cur.close()
+	return redirect(url_for('dashboard'))
+
+@app.route('/transaction_complete/<int:request_id>',methods=['POST'])
+def complete_transaction(request_id):
+	if 'user_id' not in session:
+		return redirect(url_for('login'))
+
+
+	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+	cur.execute("""SELECT cr.pet_id, cr.user_id AS adopter_id 
+		FROM call_request_table cr JOIN pet_table p ON p.pet_id = cr.pet_id 
+		WHERE cr.request_id=%s AND p.user_id=%s""",(request_id,session['user_id']))
+	
+	row = cur.fetchone()
+	
+	if row:
+		cur.execute("""INSERT INTO transaction_table(request_id, pet_id, user_id, status)
+			VALUES (%s,%s,%s,%s)""",(request_id,row['pet_id'],row['adopter_id'],'completed'))
+		
+		mysql.connection.commit()
+	
+	cur.close()
+	return redirect(url_for('dashboard'))
+
+@app.route('/profile')
+def profile():
+	if 'user_id' not in session:
+		return redirect(url_for('login'))
+
+	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+	cur.execute("""SELECT p.*, t.user_id AS adopted_by FROM pet_table p LEFT JOIN transaction_table t ON 
+		p.pet_id = t.pet_id WHERE p.user_id = %s""", (session['user_id'],))
+	
+	donated_pets = cur.fetchall()
+
+	cur.execute(""" SELECT p.*, t.status FROM transaction_table t JOIN pet_table p ON t.pet_id = p.pet_id
+		WHERE t.user_id = %s """, (session['user_id'],))
+	
+	adopted_pets = cur.fetchall()
+
+	cur.execute("SELECT * FROM user_table WHERE user_id=%s", (session['user_id'],))
+	user = cur.fetchone()
+	cur.close()
+
+	return render_template("profile.html",username=user['name'],city=user['city'],bio='pet lover',
+		donated_pets=donated_pets,adopted_pets=adopted_pets)
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+	if 'user_id' not in session:
+		return redirect(url_for('login'))	
+
+
+	cur = mysql.connection.cursor()
+	cur.execute("SELECT name, email, phone, address, city FROM user_table WHERE user_id = %s", (session['user_id'],))
+	user = cur.fetchone()
+	cur.close()
+
+	if request.method == 'POST':
+		
+		username = request.form.get('name')
+		email = request.form.get('email')
+		phone = request.form.get('phone')
+		address = request.form.get('address')
+		city = request.form.get('city')
+
+		cur = mysql.connection.cursor()
+		cur.execute("""UPDATE user_table SET name = %s,email=%s,phone=%s,address=%s,city=%s WHERE user_id=%s""",
+			(username,email,phone,address,city,session['user_id']))
+		mysql.connection.commit()
+		cur.close()
+
+		session['name'] = username
+		session['email'] = email
+		session['phone'] = phone
+		session['address'] = address
+		session['city'] = city
+
+		flash("Profile updated successfully","success")
+		return redirect(url_for('profile'))
+
+	return render_template("edit_profile.html", user=user)
+
+@app.route('/mypets')
+def mypets():
+
+	return render_template("dashboard.html",username=session.get('name'),city=session.get('city'))
+
+@app.route('/support')
+def support():
+	return render_template("customer_support.html",username=session.get('name'),city=session.get('city'))
+
+@app.route('/adopter_profile/<int:adopterid>')
+def adopter_profile(adopterid):
+
+	if 'user_id' not in session:
+		return redirect(url_for('login'))
+	
+	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+	cur.execute("SELECT * from user_table WHERE user_id=%s",(adopterid,))
+	user_data = cur.fetchone()
+
+	if not user_data:
+		cur.close()
+		return "Adopter not found",404
+
+	cur.execute("""SELECT p.*, t.user_id AS adopted_by FROM pet_table p LEFT JOIN transaction_table t ON 
+	p.pet_id = t.pet_id WHERE p.user_id = %s""", (adopterid,))
+
+	donated_pets = cur.fetchall()
+
+	cur.execute(""" SELECT p.*, t.status FROM transaction_table t JOIN pet_table p ON t.pet_id = p.pet_id
+		WHERE t.user_id = %s """, (adopterid,))
+	
+	adopted_pets = cur.fetchall()
+
+	cur.close()
+
+	return render_template('other_person_profile.html',username=user_data['name'],city=user_data['city'],donated_pets=donated_pets,adopted_pets=adopted_pets)
+
+
+if __name__ == "__main__":
+	app.run()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		# flash("No update request found!")
+		# flash(f"{field.capitalize()} updated successfully!")
+		# flash("Invalid OTP. Please try again.")
+		# allowed_fields = ['name','email','phone','address','city']
+		# if field not in allowed_fields:
+		# 	flash('Invalid field','danger')
+		# 	return redirect(url_for('edit_profile'))

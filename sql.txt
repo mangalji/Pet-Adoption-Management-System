@@ -1,0 +1,58 @@
+desc user_table;
++------------+--------------+------+-----+---------+----------------+
+| Field      | Type         | Null | Key | Default | Extra          |
++------------+--------------+------+-----+---------+----------------+
+| user_id    | int          | NO   | PRI | NULL    | auto_increment |
+| name       | varchar(255) | YES  |     | NULL    |                |
+| phone      | varchar(255) | YES  |     | NULL    |                |
+| email      | varchar(255) | YES  |     | NULL    |                |
+| password   | varchar(255) | YES  |     | NULL    |                |
+| address    | varchar(255) | YES  |     | NULL    |                |
+| city       | varchar(100) | YES  |     | NULL    |                |
+| created_at | datetime(6)  | YES  |     | NULL    |                |
+| last_login | datetime(6)  | YES  |     | NULL    |                |
++------------+--------------+------+-----+---------+----------------+
+
+
+
+desc pet_table;
++-----------------+--------------+------+-----+---------+----------------+
+| Field           | Type         | Null | Key | Default | Extra          |
++-----------------+--------------+------+-----+---------+----------------+
+| pet_id          | int          | NO   | PRI | NULL    | auto_increment |
+| name            | varchar(255) | YES  |     | NULL    |                |
+| category        | varchar(255) | YES  |     | NULL    |                |
+| breed           | varchar(255) | YES  |     | NULL    |                |
+| age             | varchar(3)   | YES  |     | NULL    |                |
+| weight          | varchar(5)   | YES  |     | NULL    |                |
+| medical_history | varchar(255) | YES  |     | NULL    |                |
+| added_at        | datetime(6)  | YES  |     | NULL    |                |
+| image           | varchar(255) | YES  |     | NULL    |                |
+| user_id         | int          | YES  | MUL | NULL    |                |
++-----------------+--------------+------+-----+---------+----------------+
+
+
+
+desc transaction_table;
++------------+--------------+------+-----+---------+----------------+
+| Field      | Type         | Null | Key | Default | Extra          |
++------------+--------------+------+-----+---------+----------------+
+| tr_id      | int          | NO   | PRI | NULL    | auto_increment |
+| request_id | int          | YES  | MUL | NULL    |                |
+| pet_id     | int          | YES  | MUL | NULL    |                |
+| user_id    | int          | YES  | MUL | NULL    |                |
+| status     | varchar(255) | YES  |     | NULL    |                |
++------------+--------------+------+-----+---------+----------------+
+
+
+desc call_request_table;
++------------+--------------+------+-----+---------+----------------+
+| Field      | Type         | Null | Key | Default | Extra          |
++------------+--------------+------+-----+---------+----------------+
+| request_id | int          | NO   | PRI | NULL    | auto_increment |
+| pet_id     | int          | YES  | MUL | NULL    |                |
+| user_id    | int          | YES  | MUL | NULL    |                |
+| status     | varchar(255) | YES  |     | NULL    |                |
++------------+--------------+------+-----+---------+----------------+
+
+
