@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
+  <title>Donate Pet</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='style.css')}}">
   <style>
     * {
       margin: 0;
@@ -373,14 +374,6 @@ input, textarea
       <li><a href="{{url_for('dashboard')}}" class="navbar-item">Home</a></li>
       <li><a href="{{url_for('profile')}}" class="navbar-item">Welcome, <span id="userName">{{ username }}</span></a></li>
       <!-- <li><a href="#" class="navbar-item">Location: <span id="userCity">{{ city }}</span></a></li> -->
-      <li class="dropdown">
-        <input type="checkbox" id="pets-drropdown-toggle" class="dropdown-toggle">
-        <label for="pets-drropdown-toggle" class="navbar-item">My Pets <i class="bi bi-chevron-down"></i> </label>
-        <div class="dropdown-content">
-          <a href="#" class="adopted-pets-btn">Adopted Pets</a>
-          <a href="#" class="donated-pets-btn">Donated Pets</a>
-        </div>
-      </li>
       <li><a href="{{ url_for('logout') }}" class="navbar-item" style="text-decoration: none;">Logout</a></li>
              <!-- <li class="notification-dropdown">
       <input type="checkbox" id="notificationToggle" class="dropdown-toggle">
@@ -429,11 +422,6 @@ input, textarea
         </div>
       {% endif %}
     {% endwith %}
-
-
-    {% if msg %}
-      <div class="flash flash-danger">{{ msg }}</div>
-    {% endif %} 
 
     <h2 class="word">Donate Pet</h2>
     

@@ -14,10 +14,6 @@ now = datetime.now()
 def generate_otp():
 	return str(random.randint(100000,999999))
 
-# def is_valid_email(email):
-# 	pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-# 	return re.match(pattern,email) is not None
-
 app = Flask(__name__)
 
 app.secret_key = "supersecretkey"
@@ -33,7 +29,7 @@ mysql = MySQL(app)
 UPLOAD_FOLDER = os.path.join('static','uploads') 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-ALLOWED_EXTENSIONS = {'png','jpg','jpeg','gif'}
+ALLOWED_EXTENSIONS = {'png','jpg','jpeg'}
 
 def allowed_file(filename):
 	return '.' in filename and \
@@ -47,7 +43,7 @@ def home():
 def registration():
 
 	if request.method == 'POST':
-		if 'generate_otp' in request.form: 				#if otp button in form.
+		if 'generate_otp' in request.form:
 			username = request.form['username']
 			email = request.form['email']
 			phone = request.form['phone']
@@ -81,7 +77,16 @@ def registration():
 			if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,12}$",password):
 				flash("password must be 6-12 digit long, contain atleast 1 letter, 1 number and 1 special character","danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
+
+			if not re.match(r"^[A-Za-z0-9\s,.-]{10,100}$", address):
+			    flash("Invalid address. Use 10–100 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
+			    return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 			
+			if not re.match(r"^[A-Za-z\s-]{2,50}$", city):
+			    flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2–50 characters).", "danger")
+			    return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
+
+
 			
 			cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 			cur.execute("SELECT * FROM user_table WHERE name=%s OR email=%s", (username,email))
@@ -94,6 +99,7 @@ def registration():
 				elif existing_user['email'] == email:
 					flash("Email id is already in use with another account","danger")
 				return render_template('registration.html',username=username, email=email, phone=phone, address=address, city=city, password=password) 
+
 
 			otp = generate_otp()
 			session['register_data'] = {'username': username, 'email' : email, 'phone' : phone, 
@@ -119,8 +125,7 @@ def registration():
 
 				cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 				hashed_password = generate_password_hash(password)
-				cur.execute(
-        		      "INSERT INTO user_table(name,phone,email,password,address,city,created_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+				cur.execute("INSERT INTO user_table(name,phone,email,password,address,city,created_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
         		      (username,phone,email,hashed_password,address,city,created_at))
 				mysql.connection.commit()
 				cur.close()
@@ -151,6 +156,7 @@ def login():
 			cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 			cur.execute('SELECT * FROM user_table WHERE name = %s AND email = %s',(username,email))
 			user = cur.fetchone()
+
 			if user and check_password_hash(user['password'],password):
 				session['loggedin'] = True
 				session['user_id'] = user['user_id']
@@ -168,9 +174,31 @@ def login():
 
 @app.route('/forgot_pass',methods=["POST","GET"])
 def forgot_password():
-	msg = ''
-	if request.method == 'POST'
-	email = request.form['email']
+	if request.method == 'POST':
+		username = request.form['username']
+		email = request.form['email']
+		password = request.form['password']
+
+		cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+		
+		cur.execute("SELECT * FROM user_table WHERE name=%s AND email=%s AND name=%s",(username,email,username))
+		user = cur.fetchone()
+
+		if user:
+
+			hashed_password = generate_password_hash(password)
+			cur.execute("UPDATE user_table SET password=%s WHERE name=%s AND email=%s AND name=%s",(hashed_password,username,email,username))
+			mysql.connection.commit()
+			flash("password reset  successfully")
+		else:
+			flash("No user found with these details")
+		
+		cur.close()
+		return redirect(url_for('login'))
+
+	return render_template('forgot_password.html')
+
+
 
 @app.route("/dash")
 def dashboard():
@@ -179,11 +207,10 @@ def dashboard():
 
 	if 'name' in session:
 		cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-		cur.execute("""
-		SELECT cr.request_id, cr.status, p.pet_id, p.category AS pet_category, u.user_id AS adopter_id,
+		cur.execute("""SELECT cr.request_id, cr.status, p.pet_id, p.category AS pet_category, u.user_id AS adopter_id,
 		u.name AS adopter_name, u.phone AS adopter_phone, u.city AS adopter_city FROM call_request_table cr
 		JOIN pet_table p ON p.pet_id = cr.pet_id JOIN user_table u ON u.user_id = cr.user_id
-		LEFT JOIN transaction_table t on cr.pet_id = t.pet_id AND t.status = 'completed' or t.status = 'Rejected'    
+		LEFT JOIN transaction_table t on cr.pet_id = t.pet_id AND (t.status = 'completed')    
 		WHERE p.user_id = %s AND t.tr_id IS NULL order by cr.request_id desc""", (session['user_id'],))
 		
 		call_requests = cur.fetchall()
@@ -260,11 +287,13 @@ def adopt():
 		return redirect(url_for('login'))
 	
 	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-	cur.execute("""SELECT p.*,u.name AS donor_name,(SELECT COUNT(*) 
+	cur.execute("""SELECT p.*,u.name AS donor_name,
+				(SELECT COUNT(*) 
                 FROM call_request_table cr WHERE cr.pet_id = p.pet_id 
                 AND cr.user_id = %s) AS already_requested FROM pet_table p
                 LEFT JOIN user_table u ON u.user_id = p.user_id
-                WHERE p.user_id != %s AND p.pet_id NOT IN (SELECT pet_id 
+                WHERE p.user_id != %s AND p.pet_id NOT IN 
+                (SELECT pet_id 
                 FROM transaction_table WHERE status = 'completed')""",
                 (session['user_id'],session['user_id']))
 	pets = cur.fetchall()
@@ -381,7 +410,7 @@ def edit_profile():
 		city = request.form.get('city')
 
 		cur = mysql.connection.cursor()
-		cur.execute("""UPDATE user_table SET name = %s,email=%s,phone=%s,address=%s,city=%s WHERE user_id=%s""",
+		cur.execute("UPDATE user_table SET name = %s,email=%s,phone=%s,address=%s,city=%s WHERE user_id=%s",
 			(username,email,phone,address,city,session['user_id']))
 		mysql.connection.commit()
 		cur.close()
@@ -396,11 +425,6 @@ def edit_profile():
 		return redirect(url_for('profile'))
 
 	return render_template("edit_profile.html", user=user)
-
-@app.route('/mypets')
-def mypets():
-
-	return render_template("dashboard.html",username=session.get('name'),city=session.get('city'))
 
 @app.route('/support')
 def support():
@@ -421,7 +445,7 @@ def adopter_profile(adopterid):
 		cur.close()
 		return "Adopter not found",404
 
-	cur.execute("""SELECT p.*, t.user_id AS adopted_by FROM pet_table p LEFT JOIN transaction_table t ON 
+	cur.execute(""" SELECT p.*, t.user_id AS adopted_by FROM pet_table p LEFT JOIN transaction_table t ON 
 	p.pet_id = t.pet_id WHERE p.user_id = %s""", (adopterid,))
 
 	donated_pets = cur.fetchall()
