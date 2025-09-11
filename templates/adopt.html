@@ -286,7 +286,7 @@ button.navbar-item:hover {
     <div class="navbar-logo">Pet Adoption Management System</div>
     <ul class="navbar-items">
       <li><a href="{{url_for('dashboard')}}" class="navbar-item">Home</a></li>
-      <li><a href="{{url_for('profile')}}" class="navbar-item">Welcome, <span id="userName">{{ username }}</span></a></li>
+      <li><a href="{{url_for('profile')}}" class="navbar-item">Welcome <span id="userName">{{ username }}</span></a></li>
       <li><a href="{{ url_for('logout') }}"class="navbar-item" style="text-decoration: none;">Logout</a></li>
 <!--        <li class="notification-dropdown">
       <input type="checkbox" id="notificationToggle" class="dropdown-toggle">

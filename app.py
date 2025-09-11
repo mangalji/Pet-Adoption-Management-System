@@ -198,8 +198,6 @@ def forgot_password():
 
 	return render_template('forgot_password.html')
 
-
-
 @app.route("/dash")
 def dashboard():
 	if 'user_id' not in session:
@@ -210,7 +208,7 @@ def dashboard():
 		cur.execute("""SELECT cr.request_id, cr.status, p.pet_id, p.category AS pet_category, u.user_id AS adopter_id,
 		u.name AS adopter_name, u.phone AS adopter_phone, u.city AS adopter_city FROM call_request_table cr
 		JOIN pet_table p ON p.pet_id = cr.pet_id JOIN user_table u ON u.user_id = cr.user_id
-		LEFT JOIN transaction_table t on cr.pet_id = t.pet_id AND (t.status = 'completed')    
+		LEFT JOIN transaction_table t on cr.pet_id = t.pet_id AND (t.status = 'completed' or t.status = 'rejected')    
 		WHERE p.user_id = %s AND t.tr_id IS NULL order by cr.request_id desc""", (session['user_id'],))
 		
 		call_requests = cur.fetchall()
@@ -263,10 +261,22 @@ def donate():
 			flash(f"{session.get('name')}Please fill all field.")
 			return render_template('donate.html',pet_name=pet_name,pet_category=pet_category,pet_breed=pet_breed,pet_age=pet_age,pet_weight=pet_weight,pet_desc=pet_desc,pet_image=pet_image)
 
-		if not (len(pet_name) <=12): #or not re.search(r'([A-Za-z])\1\1\1', pet_name):
-			flash("pet's name would be maximum up to 12 characters and valid.")
+		if not re.match(r'^[A-Za-z0-9]+$', pet_name) or re.search(r'(.)\1\1', pet_name):
+			flash("Pet name must be valid.","danger")
+			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_age=pet_age,pet_weight=pet_weight,pet_desc=pet_desc,pet_image=pet_image)
+
+		if not (len(pet_name) <=12):
+			flash("pet's name would be maximum up to 12 characters and valid.","danger")
 			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_age=pet_age,pet_weight=pet_weight,pet_desc=pet_desc,pet_image=pet_image) 
 		
+		if not re.match(r'^[0-9]{1,2}$', pet_age) or int(pet_age) <= 0 or int(pet_age) > 20:
+			flash("Pet age must be valid", "danger")
+			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_name=pet_name,pet_weight=pet_weight,pet_desc=pet_desc,pet_image=pet_image)
+
+		if not re.match(r'^[0-9]{1,4}(\.[0-9]{1,2})?$', pet_weight):
+			flash("Pet weight must be a valid", "danger")
+			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_name=pet_name,pet_age=pet_age,pet_desc=pet_desc)
+
 		cur = mysql.connection.cursor()
 		cur.execute("""
 			INSERT INTO pet_table
