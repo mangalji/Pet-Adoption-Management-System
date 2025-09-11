@@ -186,15 +186,21 @@ def forgot_password():
 
 		if user:
 
+			if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,12}$",password):
+				flash("password must be 6-12 digit long, contain atleast 1 letter, 1 number and 1 special character","danger")
+				return render_template('registration.html',username=username,email=email)
+
 			hashed_password = generate_password_hash(password)
 			cur.execute("UPDATE user_table SET password=%s WHERE name=%s AND email=%s AND name=%s",(hashed_password,username,email,username))
 			mysql.connection.commit()
 			flash("password reset  successfully")
+
 		else:
 			flash("No user found with these details")
+			return render_template('forgot_password.html',username=username,email=email)
 		
 		cur.close()
-		return redirect(url_for('login'))
+		return redirect(url_for('forgot_password'))
 
 	return render_template('forgot_password.html')
 
