@@ -79,12 +79,12 @@ def registration():
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
 
 			if not re.match(r"^[A-Za-z0-9\s,.-]{10,100}$", address):
-			    flash("Invalid address. Use 10–100 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
-			    return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
+				flash("Invalid address. Use 10–100 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
+				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 			
 			if not re.match(r"^[A-Za-z\s-]{2,50}$", city):
-			    flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2–50 characters).", "danger")
-			    return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
+				flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2–50 characters).", "danger")
+				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 
 
 			
@@ -408,6 +408,37 @@ def edit_profile():
 		phone = request.form.get('phone')
 		address = request.form.get('address')
 		city = request.form.get('city')
+
+		if not all([username, email, phone, address, city]):
+			flash("Please fill all field before generating OTP.", "danger")
+			return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
+		
+		if not re.match(r'^[A-Za-z0-9]+$',username) or not (5 <= len(username) <= 10) or not (re.search(r'[A-Za-z]',username) and re.search(r'\d',username)) or re.search(r'(.)\1\1',username):
+			flash("Username must be 5-10 characters with at least 1 letter and 1 number, and no repeating characters thrice.", "danger")
+			return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
+		
+		email_regex = r"^(?!.*\.\.)(?!.*\.$)[a-zA-Z0-9._%+-]{3,15}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+		if (
+			not re.match(email_regex,email) 
+			or email.count('@') !=1 
+			or email.startswith('@') 
+			or len(email.split('@')[0]) > 15
+			) :
+			flash("Invalid email address", "danger")
+			return render_template('registration.html', username=username,email=email,phone=phone,address=address,city=city)
+		
+		if not re.match(r'^[6-9]\d{9}$', phone):
+			flash("Invalid phone no, Please enter valid phone number","danger")
+			return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
+		
+		if not re.match(r"^[A-Za-z0-9\s,.-]{10,100}$", address):
+			flash("Invalid address. Use 10–100 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
+			return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city)
+		
+		if not re.match(r"^[A-Za-z\s-]{2,50}$", city):
+			flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2–50 characters).", "danger")
+			return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city)
+
 
 		cur = mysql.connection.cursor()
 		cur.execute("UPDATE user_table SET name = %s,email=%s,phone=%s,address=%s,city=%s WHERE user_id=%s",
