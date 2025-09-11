@@ -52,9 +52,9 @@
 .dropdown-content a {
   color: #333;
   padding: 10px 20px;
-  display: block;
   text-decoration: none;
   transition: background 0.2s ease;
+  display: block;
   font-size: 15px;
 }
 .dropdown-content a:hover {
