@@ -64,7 +64,7 @@
             <a href="#req-{{ r.request_id }}" style="font-size: 14px;">Review</a>
             {% if r.status == 'accepted' %}
             <form method="POST" action="{{ url_for('complete_transaction', request_id=r.request_id) }}" style="display: inline;">
-              <button type="submit" style="margin-left: 8px;">Transaction Completed</button>
+              <button type="submit" style="margin-left: 8px;">Complete Transaction</button>
             </form>
             {% endif %}
           </div>

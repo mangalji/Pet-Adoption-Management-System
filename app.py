@@ -57,7 +57,7 @@ def registration():
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
 			if not re.match(r'^[A-Za-z0-9]+$',username) or not (5 <= len(username) <= 10) or not (re.search(r'[A-Za-z]',username) and re.search(r'\d',username)) or re.search(r'(.)\1\1',username):
-				flash("Username must be 5-10 characters with at least 1 letter and 1 number, and no repeating characters thrice.", "danger")
+				flash("Username must be 5-10 characters in alphanumeric form and also in valid form", "danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
 			email_regex = r"^(?!.*\.\.)(?!.*\.$)[a-zA-Z0-9._%+-]{3,15}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
@@ -86,8 +86,6 @@ def registration():
 				flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2–50 characters).", "danger")
 				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 
-
-			
 			cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 			cur.execute("SELECT * FROM user_table WHERE name=%s OR email=%s", (username,email))
 			existing_user = cur.fetchone()
@@ -214,8 +212,7 @@ def dashboard():
 		cur.execute("""SELECT cr.request_id, cr.status, p.pet_id, p.category AS pet_category, u.user_id AS adopter_id,
 		u.name AS adopter_name, u.phone AS adopter_phone, u.city AS adopter_city FROM call_request_table cr
 		JOIN pet_table p ON p.pet_id = cr.pet_id JOIN user_table u ON u.user_id = cr.user_id
-		LEFT JOIN transaction_table t on cr.pet_id = t.pet_id AND (t.status = 'completed' or t.status = 'rejected')    
-		WHERE p.user_id = %s AND t.tr_id IS NULL order by cr.request_id desc""", (session['user_id'],))
+		WHERE p.user_id = %s AND cr.status = 'pending' ORDER BY cr.request_id DESC""",(session['user_id'],))
 		
 		call_requests = cur.fetchall()
 		
@@ -303,15 +300,10 @@ def adopt():
 		return redirect(url_for('login'))
 	
 	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-	cur.execute("""SELECT p.*,u.name AS donor_name,
-				(SELECT COUNT(*) 
-                FROM call_request_table cr WHERE cr.pet_id = p.pet_id 
-                AND cr.user_id = %s) AS already_requested FROM pet_table p
-                LEFT JOIN user_table u ON u.user_id = p.user_id
-                WHERE p.user_id != %s AND p.pet_id NOT IN 
-                (SELECT pet_id 
-                FROM transaction_table WHERE status = 'completed')""",
-                (session['user_id'],session['user_id']))
+	cur.execute("""SELECT p.*,u.name AS donor_name,(SELECT cr.status FROM call_request_table cr WHERE cr.pet_id = p.pet_id AND cr.user_id = %s ORDER BY cr.request_id DESC LIMIT 1) AS request_status
+	FROM pet_table p JOIN user_table u ON u.user_id = p.user_id WHERE p.user_id != %s AND p.pet_id NOT IN 
+	(SELECT pet_id FROM transaction_table WHERE status = 'completed')""",(session['user_id'],session['user_id']))
+	
 	pets = cur.fetchall()
 	cur.close()
 
@@ -410,8 +402,7 @@ def profile():
 def edit_profile():
 	if 'user_id' not in session:
 		return redirect(url_for('login'))	
-
-
+	
 	cur = mysql.connection.cursor()
 	cur.execute("SELECT name, email, phone, address, city FROM user_table WHERE user_id = %s", (session['user_id'],))
 	user = cur.fetchone()
@@ -427,33 +418,28 @@ def edit_profile():
 
 		if not all([username, email, phone, address, city]):
 			flash("Please fill all field before generating OTP.", "danger")
-			return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
+			return render_template('edit_profile.html',username=username,email=email,phone=phone,address=address,city=city,user=user)
 		
 		if not re.match(r'^[A-Za-z0-9]+$',username) or not (5 <= len(username) <= 10) or not (re.search(r'[A-Za-z]',username) and re.search(r'\d',username)) or re.search(r'(.)\1\1',username):
-			flash("Username must be 5-10 characters with at least 1 letter and 1 number, and no repeating characters thrice.", "danger")
-			return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
+			flash("Username must be 5-10 characters in alphanumeric form and also in valid form", "danger")
+			return render_template('edit_profile.html',username=username,email=email,phone=phone,address=address,city=city,user=user)
 		
 		email_regex = r"^(?!.*\.\.)(?!.*\.$)[a-zA-Z0-9._%+-]{3,15}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-		if (
-			not re.match(email_regex,email) 
-			or email.count('@') !=1 
-			or email.startswith('@') 
-			or len(email.split('@')[0]) > 15
-			) :
+		if (not re.match(email_regex,email) or email.count('@') !=1 or email.startswith('@') or len(email.split('@')[0]) > 15) :
 			flash("Invalid email address", "danger")
-			return render_template('registration.html', username=username,email=email,phone=phone,address=address,city=city)
+			return render_template('edit_profile.html', username=username,email=email,phone=phone,address=address,city=city,user=user)
 		
 		if not re.match(r'^[6-9]\d{9}$', phone):
 			flash("Invalid phone no, Please enter valid phone number","danger")
-			return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
+			return render_template('edit_profile.html',username=username,email=email,phone=phone,address=address,city=city,user=user)
 		
 		if not re.match(r"^[A-Za-z0-9\s,.-]{10,100}$", address):
 			flash("Invalid address. Use 10–100 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
-			return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city)
+			return render_template('edit_profile.html', username=username, email=email, phone=phone, address=address, city=city,user=user)
 		
 		if not re.match(r"^[A-Za-z\s-]{2,50}$", city):
-			flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2–50 characters).", "danger")
-			return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city)
+			flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2-50 characters).", "danger")
+			return render_template('edit_profile.html', username=username, email=email, phone=phone, address=address, city=city,user=user)
 
 
 		cur = mysql.connection.cursor()
@@ -472,6 +458,47 @@ def edit_profile():
 		return redirect(url_for('profile'))
 
 	return render_template("edit_profile.html", user=user)
+
+@app.route('/view_pet/<int:pet_id>')
+def view_pet(pet_id):
+	if 'user_id' not in session:
+		return redirect(url_for('login'))
+
+	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+	cur.execute("""SELECT p.*, u.name AS donor_name, u.city AS donor_city from pet_table p
+		join user_table u on p.user_id = u.user_id WHERE p.pet_id = %s""",(pet_id,))
+
+	pet = cur.fetchone()
+
+	if not pet:
+		flash("Pet not found","danger")
+		return redirect(url_for('profile'))
+
+	cur.execute("""SELECT t.*, a.name AS adopter_name, a.city AS adopter_city, a.phone AS adopter_phone
+		from transaction_table t join user_table a on t.user_id = a.user_id WHERE t.pet_id = %s
+		AND t.status = 'completed'""",(pet_id,))
+	transaction = cur.fetchone()
+	cur.close()
+
+	return render_template('view_pet.html',pet=pet, transaction = transaction)
+
+@app.route('/delete_pet/<int:pet_id>', methods=['POST'])
+def delete_pet(pet_id):
+
+	if 'user_id' not in session:
+		return redirect(url_for('login'))
+
+	cur = mysql.connection.cursor()
+
+	cur.execute("DELETE FROM call_request_table WHERE pet_id = %s",(pet_id,))
+	mysql.connection.commit()
+
+	cur.execute("DELETE FROM pet_table WHERE pet_id = %s AND user_id = %s",(pet_id,session['user_id']))
+	mysql.connection.commit()
+	cur.close()
+	flash("pet deleted successfully","success")
+	return redirect(url_for('profile'))
 
 @app.route('/support')
 def support():
@@ -492,7 +519,7 @@ def adopter_profile(adopterid):
 		cur.close()
 		return "Adopter not found",404
 
-	cur.execute(""" SELECT p.*, t.user_id AS adopted_by FROM pet_table p LEFT JOIN transaction_table t ON 
+	cur.execute(""" SELECT p.*, t.user_id AS adopted_by FROM pet_table p JOIN transaction_table t ON 
 	p.pet_id = t.pet_id WHERE p.user_id = %s""", (adopterid,))
 
 	donated_pets = cur.fetchall()

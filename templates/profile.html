@@ -19,17 +19,7 @@
       <li><a href="{{ url_for('profile') }}" class="navbar-item">Welcome <span id="userName">{{ username }}</span></a></li>
       <!-- <li><a href="https://www.google.com/maps/search/?api=1&query={{ city }}
 " class="navbar-item">Location: <span id="userCity">{{ city }}</span></a></li> -->
-      <!-- <li><button class="navbar-item" id="petsBtn">My Pets</button></li> -->
-       
-      <!--dropdown for my pets button -->
-      <!-- <li class="dropdown">
-        <input type="checkbox" id="pets-drropdown-toggle" class="dropdown-toggle">
-        <label for="pets-drropdown-toggle" class="navbar-item">My Pets <i class="bi bi-chevron-down"></i> </label>
-        <div class="dropdown-content">
-          <a href="#" class="adopted-pets-btn">Adopted Pets</a>
-          <a href="#" class="donated-pets-btn">Donated Pets</a>
-        </div>
-      </li> -->
+
       <li><a class="navbar-item" style="text-decoration: none;" href="{{ url_for('logout') }}">Logout</a></li>
        <!-- <li class="notification-dropdown">
       <input type="checkbox" id="notificationToggle" class="dropdown-toggle">
@@ -127,9 +117,19 @@
           <img src="{{ url_for('static', filename=pet.image) }}" alt="Pet">
           {% if pet.adopted_by %}
             <span class="pet-status">Donated</span>
+            <div style="margin-top: 8px; text-align: center;">
+              <a href="{{url_for('view_pet',pet_id=pet.pet_id)}}" class="btn btn-info btn-sm">view pet</a>
+            </div>
           {% else %}
             <span class="pet-status">Pending</span>
-          {% endif %}   
+            
+          <div style="margin-top: 8px; text-align: center;">
+            <a href="{{url_for('view_pet',pet_id=pet.pet_id)}}" class="btn btn-info btn-sm">view pet</a>
+            <form method="POST" action="{{url_for('delete_pet',pet_id=pet.pet_id)}}" style="display: inline;">
+              <button type="submit" class="btn btn-danger btn-sm">Delete pet</button>
+            </form>
+          </div>
+          {% endif %} 
         </div>
          {% else %}
         <p class="text-center mt-3">No pets donated yet.</p>
@@ -151,6 +151,7 @@
       </div>
     </div>
   </div>
+
 <!-- About Modal -->
 <div id="aboutModal" class="modal">
   <div class="modal-content">

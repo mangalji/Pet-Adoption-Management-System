@@ -82,8 +82,7 @@
             <td>{{ pet.age }}</td>
             <td>{{ pet.weight }}</td>
             <td>{{ pet.pet_description }}</td>
-            <!-- <td>{{ pet.category }}</td> -->
-             <td>
+            <td>
                 {% if pet.image %}
                     <img src="{{ url_for('static',filename=pet.image) }}" width="100">
                 {% else %}
@@ -95,7 +94,26 @@
              </td>
              <td>{{pet.donor_name or 'Unknown' }}</td>
              <td>
-              {% if pet.already_requested %}
+              {% if pet.request_status == None %} <!-- call request not send yet -->
+                <form method="POST" action="{{url_for('create_call_request',pet_id=pet.pet_id)}}">
+                  <button type="submit" class="adopt-button">Adopt</button>
+                </form>
+
+              {% elif pet.request_status == 'pending' %} <!-- call request send, but in pending -->
+                <form method="POST" action="{{url_for('cancel_request',pet_id=pet.pet_id)}}">
+                  <button type="submit" class="adopt-button" disabled>Request already sent</button>
+                  <button type="submit" class="cancle-button">Cancle request</button>
+                </form>
+                
+                {% elif pet.request_status == 'accepted' %} <!-- if donor accept the request -->
+                  <button type="button" class="adopt-button" disabled>Request already sent</button>
+                  <p style="color: green; font-size: 14px;">Request accepted, transaction in processing</p>
+                  {% elif pet.request_status == 'rejected' %} <!-- if donor rejected the request -->
+                    <button type="button" class="adopt-button" disabled>Request already sent</button>
+                    <p style="color: red; font-size: 14px;">Request rejected</p>
+                    {% endif %}
+             </td>
+              <!-- {% if pet.already_requested %}
               <form method="POST" action="{{ url_for('cancel_request',pet_id=pet.pet_id) }}">
                 <button type="submit" class="adopt-button" disabled title="Already Requested">Adopt request sent</button>
                 <button type="submit" class="cancel-button">cancel request</button>
@@ -105,7 +123,7 @@
                       <button type="submit" class="adopt-button">Adopt</button>
                 </form>
                 {% endif %}
-             </td>
+             </td> -->
 
         </tr>
         {% endfor %}
