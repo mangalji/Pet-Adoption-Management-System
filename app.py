@@ -45,11 +45,14 @@ def registration():
 	if request.method == 'POST':
 		if 'generate_otp' in request.form:
 			username = request.form['username']
+			print('username: ',username)
 			email = request.form['email']
+			print('email:', email)
 			phone = request.form['phone']
 			address = request.form['address']
 			city = request.form['city']
 			password = request.form['password']
+			print('password:',password)
 			created_at = datetime.now()
 
 			if not all([username, email, phone, address, city, password]):
@@ -78,12 +81,12 @@ def registration():
 				flash("password must be 6-12 digit long, contain atleast 1 letter, 1 number and 1 special character","danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
 
-			if not re.match(r"^[A-Za-z0-9\s,.-]{10,100}$", address):
-				flash("Invalid address. Use 10–100 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
+			if not re.match(r"^[A-Za-z0-9\s,.-]{10,25}$", address):
+				flash("Invalid address. Use 10–25 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
 				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 			
-			if not re.match(r"^[A-Za-z\s-]{2,50}$", city):
-				flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2–50 characters).", "danger")
+			if not re.match(r"^[A-Za-z\s-]{2,10}$", city):
+				flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2–10 characters).", "danger")
 				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 
 			cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)

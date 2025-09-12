@@ -323,8 +323,8 @@ body{
 }
 .pet-status {
   position: absolute;
-  bottom: 35px;
-  right: 52px;
+  bottom: 40px;
+  right: 55px;
   background: rgba(0,0,0,0.6);
   color: white;
   padding: 2px 8px;
