@@ -1,3 +1,6 @@
 mangal123:mangal@gmail.com:mangal@123
 raj123:rajmangal03@gmail.com:yuvi@123
 yuvraj45: yuvraj45@gmail.com: ajay@123
+singh45 : yuvraj54@gmail.com: yuvraj@45
+mangal10: mangal123@gmain.com: raj@123
+mangal09: mangal90@gmail.com: mangal@123

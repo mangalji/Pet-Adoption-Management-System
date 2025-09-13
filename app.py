@@ -59,21 +59,15 @@ def registration():
 				flash("Please fill all field before generating OTP.", "danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
-			if not re.match(r'^[A-Za-z0-9]+$',username) or not (5 <= len(username) <= 10) or not (re.search(r'[A-Za-z]',username) and re.search(r'\d',username)) or re.search(r'(.)\1\1',username):
+			if ( not re.match(r'^(?!\d)(?!.*(.)\1\1)(?!.*__)(?!.*_$)(?!^_)(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9_]{5,10}$', username)):
 				flash("Username must be 5-10 characters in alphanumeric form and also in valid form", "danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
-			email_regex = r"^(?!.*\.\.)(?!.*\.$)[a-zA-Z0-9._%+-]{3,15}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-			if (
-				not re.match(email_regex,email) 
-				or email.count('@') !=1 
-				or email.startswith('@') 
-				or len(email.split('@')[0]) > 15
-				) :
+			if not re.match(r'^[a-zA-Z0-9]+[a-zA-Z0-9._-]*@[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}$', email):
 				flash("Invalid email address", "danger")
 				return render_template('registration.html', username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
-			if not re.match(r'^[6-9]\d{9}$', phone):
+			if not re.match(r'^(?!.*(\d)\1{9})(?![6-9]0{9})[6-9]\d{9}$', phone):
 				flash("Invalid phone no, Please enter valid phone number","danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
@@ -81,12 +75,12 @@ def registration():
 				flash("password must be 6-12 digit long, contain atleast 1 letter, 1 number and 1 special character","danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
 
-			if not re.match(r"^[A-Za-z0-9\s,.-]{10,25}$", address):
-				flash("Invalid address. Use 10–25 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
+			if not re.match(r"^[A-Za-z0-9\s,.-]{10,50}$", address):
+				flash("Invalid address. Use 10–50 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
 				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 			
-			if not re.match(r"^[A-Za-z\s-]{2,10}$", city):
-				flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2–10 characters).", "danger")
+			if not re.match(r"^[A-Za-z\s-]{2,15}$", city):
+				flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2–15 characters).", "danger")
 				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 
 			cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -189,7 +183,7 @@ def forgot_password():
 
 			if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,12}$",password):
 				flash("password must be 6-12 digit long, contain atleast 1 letter, 1 number and 1 special character","danger")
-				return render_template('registration.html',username=username,email=email)
+				return render_template('forgot_password.html',username=username,email=email)
 
 			hashed_password = generate_password_hash(password)
 			cur.execute("UPDATE user_table SET password=%s WHERE name=%s AND email=%s AND name=%s",(hashed_password,username,email,username))
@@ -215,7 +209,7 @@ def dashboard():
 		cur.execute("""SELECT cr.request_id, cr.status, p.pet_id, p.category AS pet_category, u.user_id AS adopter_id,
 		u.name AS adopter_name, u.phone AS adopter_phone, u.city AS adopter_city FROM call_request_table cr
 		JOIN pet_table p ON p.pet_id = cr.pet_id JOIN user_table u ON u.user_id = cr.user_id
-		WHERE p.user_id = %s AND cr.status = 'pending' ORDER BY cr.request_id DESC""",(session['user_id'],))
+		WHERE p.user_id = %s AND (cr.status = 'pending' or cr.status = 'accepted') ORDER BY cr.request_id DESC""",(session['user_id'],))
 		
 		call_requests = cur.fetchall()
 		
@@ -414,45 +408,45 @@ def edit_profile():
 	if request.method == 'POST':
 		
 		username = request.form.get('name')
-		email = request.form.get('email')
+		# email = request.form.get('email')
 		phone = request.form.get('phone')
 		address = request.form.get('address')
 		city = request.form.get('city')
 
-		if not all([username, email, phone, address, city]):
+		if not all([username, phone, address, city]):
 			flash("Please fill all field before generating OTP.", "danger")
-			return render_template('edit_profile.html',username=username,email=email,phone=phone,address=address,city=city,user=user)
+			return render_template('edit_profile.html',username=username,phone=phone,address=address,city=city,user=user)
 		
-		if not re.match(r'^[A-Za-z0-9]+$',username) or not (5 <= len(username) <= 10) or not (re.search(r'[A-Za-z]',username) and re.search(r'\d',username)) or re.search(r'(.)\1\1',username):
+		if ( not re.match(r'^(?!\d)(?!.*(.)\1\1)(?!.*__)(?!.*_$)(?!^_)(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9_]{5,10}$', username)):
 			flash("Username must be 5-10 characters in alphanumeric form and also in valid form", "danger")
-			return render_template('edit_profile.html',username=username,email=email,phone=phone,address=address,city=city,user=user)
+			return render_template('edit_profile.html',username=username,phone=phone,address=address,city=city,user=user)
 		
-		email_regex = r"^(?!.*\.\.)(?!.*\.$)[a-zA-Z0-9._%+-]{3,15}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-		if (not re.match(email_regex,email) or email.count('@') !=1 or email.startswith('@') or len(email.split('@')[0]) > 15) :
-			flash("Invalid email address", "danger")
-			return render_template('edit_profile.html', username=username,email=email,phone=phone,address=address,city=city,user=user)
+		# email_regex = r"^(?!.*\.\.)(?!.*\.$)[a-zA-Z0-9._%+-]{3,15}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+		# if (not re.match(email_regex,email) or email.count('@') !=1 or email.startswith('@') or len(email.split('@')[0]) > 15) :
+		# 	flash("Invalid email address", "danger")
+		# 	return render_template('edit_profile.html', username=username,email=email,phone=phone,address=address,city=city,user=user)
 		
-		if not re.match(r'^[6-9]\d{9}$', phone):
+		if not re.match(r'^(?!.*(\d)\1{9})(?![6-9]0{9})[6-9]\d{9}$', phone):
 			flash("Invalid phone no, Please enter valid phone number","danger")
-			return render_template('edit_profile.html',username=username,email=email,phone=phone,address=address,city=city,user=user)
+			return render_template('edit_profile.html',username=username,phone=phone,address=address,city=city,user=user)
 		
-		if not re.match(r"^[A-Za-z0-9\s,.-]{10,100}$", address):
-			flash("Invalid address. Use 10–100 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
-			return render_template('edit_profile.html', username=username, email=email, phone=phone, address=address, city=city,user=user)
+		if not re.match(r"^[A-Za-z0-9\s,.-]{10,30}$", address):
+			flash("Invalid address. Use 10–30 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
+			return render_template('edit_profile.html', username=username, phone=phone, address=address, city=city,user=user)
 		
-		if not re.match(r"^[A-Za-z\s-]{2,50}$", city):
-			flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2-50 characters).", "danger")
-			return render_template('edit_profile.html', username=username, email=email, phone=phone, address=address, city=city,user=user)
+		if not re.match(r"^[A-Za-z\s-]{2,15}$", city):
+			flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2-15 characters).", "danger")
+			return render_template('edit_profile.html', username=username, phone=phone, address=address, city=city,user=user)
 
 
 		cur = mysql.connection.cursor()
-		cur.execute("UPDATE user_table SET name = %s,email=%s,phone=%s,address=%s,city=%s WHERE user_id=%s",
-			(username,email,phone,address,city,session['user_id']))
+		cur.execute("UPDATE user_table SET name = %s,phone=%s,address=%s,city=%s WHERE user_id=%s",
+			(username,phone,address,city,session['user_id']))
 		mysql.connection.commit()
 		cur.close()
 
 		session['name'] = username
-		session['email'] = email
+		# session['email'] = email
 		session['phone'] = phone
 		session['address'] = address
 		session['city'] = city
