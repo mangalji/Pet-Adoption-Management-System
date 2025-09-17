@@ -8,6 +8,8 @@ from werkzeug.utils import secure_filename
 import MySQLdb.cursors
 from datetime import datetime
 from werkzeug.security import generate_password_hash,check_password_hash
+from werkzeug.exceptions import RequestEntityTooLarge
+
 
 now = datetime.now()
 
@@ -26,22 +28,18 @@ app.config['MYSQL_DB'] = 'pet_adoption_system_database'
 
 mysql = MySQL(app)
 
-UPLOAD_FOLDER = os.path.join('static','uploads') 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-ALLOWED_EXTENSIONS = {'png','jpg','jpeg'}
-
-def allowed_file(filename):
-	return '.' in filename and \
-		filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
-
 @app.route("/")
 def home():
 	return render_template("index.html")
 
 @app.route('/registration', methods=['GET','POST'])
 def registration():
-
+	username = ''
+	email = ''
+	phone = ''
+	address = ''
+	city = ''
+	password = ''
 	if request.method == 'POST':
 		if 'generate_otp' in request.form:
 			username = request.form['username']
@@ -63,7 +61,8 @@ def registration():
 				flash("Username must be 5-10 characters in alphanumeric form and also in valid form", "danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
-			if not re.match(r'^[a-zA-Z0-9]+[a-zA-Z0-9._-]*@[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}$', email):
+			# if not re.match(r'^[a-zA-Z0-9]+[a-zA-Z0-9._-]*@[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}$', email):
+			if not re.match(r'^[a-zA-Z][a-zA-Z0-9._-]{0,17}@[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}$', email):
 				flash("Invalid email address", "danger")
 				return render_template('registration.html', username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
@@ -132,7 +131,7 @@ def registration():
 			
 			else:
 				flash("Invalid OTP","danger")
-				return render_template('registration.html', username=username,email=email,phone=phone,address=address,city=city,password=password)
+				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 	return render_template("registration.html")
 
 
@@ -209,7 +208,7 @@ def dashboard():
 		cur.execute("""SELECT cr.request_id, cr.status, p.pet_id, p.category AS pet_category, u.user_id AS adopter_id,
 		u.name AS adopter_name, u.phone AS adopter_phone, u.city AS adopter_city FROM call_request_table cr
 		JOIN pet_table p ON p.pet_id = cr.pet_id JOIN user_table u ON u.user_id = cr.user_id
-		WHERE p.user_id = %s AND (cr.status = 'pending' or cr.status = 'accepted') ORDER BY cr.request_id DESC""",(session['user_id'],))
+		WHERE p.user_id = %s AND cr.status IN  ('pending', 'accepted') AND NOT EXISTS(SELECT 1 FROM transaction_table t WHERE t.request_id = cr.request_id AND t.status = 'completed') ORDER BY cr.request_id DESC""",(session['user_id'],))
 		
 		call_requests = cur.fetchall()
 		
@@ -229,6 +228,21 @@ def logout():
 	response.headers['Expires'] = '0'
 	return response
 	# return'<script>window.history.forward()</script>'
+
+UPLOAD_FOLDER = os.path.join('static','uploads') 
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
+
+ALLOWED_EXTENSIONS = {'png','jpg','jpeg'}
+
+def allowed_file(filename):
+	return '.' in filename and \
+		filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(e):
+    flash("File is too large. Max size allowed is 2 MB.", "danger")
+    return redirect(url_for('donate'))
 
 
 @app.route('/donate', methods=['GET', 'POST'])
@@ -254,7 +268,7 @@ def donate():
 			image_db_path = f"uploads/{filename}"
 		else:
 			image_db_path = None
-			flash("please upload valid image")
+			flash("please upload valid image","danger")
 			return redirect(url_for('donate'))
 
 		if not all([pet_name,pet_category,pet_breed,pet_age,pet_weight,pet_desc,pet_image]):
@@ -269,11 +283,11 @@ def donate():
 			flash("pet's name would be maximum up to 12 characters and valid.","danger")
 			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_age=pet_age,pet_weight=pet_weight,pet_desc=pet_desc,pet_image=pet_image) 
 		
-		if not re.match(r'^[0-9]{1,2}$', pet_age) or int(pet_age) <= 0 or int(pet_age) > 20:
+		if not re.match(r'^[0-9]{1,2}$', pet_age) or int(pet_age) <= 0 or int(pet_age) > 84:
 			flash("Pet age must be valid", "danger")
 			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_name=pet_name,pet_weight=pet_weight,pet_desc=pet_desc,pet_image=pet_image)
 
-		if not re.match(r'^[0-9]{1,4}(\.[0-9]{1,2})?$', pet_weight):
+		if not re.match(r'^[0-9]{1,3}(\.[0-9]{1,2})?$', pet_weight):
 			flash("Pet weight must be a valid", "danger")
 			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_name=pet_name,pet_age=pet_age,pet_desc=pet_desc)
 
@@ -378,13 +392,64 @@ def profile():
 		return redirect(url_for('login'))
 
 	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-	cur.execute("""SELECT p.*, t.user_id AS adopted_by FROM pet_table p LEFT JOIN transaction_table t ON 
-		p.pet_id = t.pet_id WHERE p.user_id = %s""", (session['user_id'],))
-	
+	# cur.execute("""
+	# 		 SELECT p.*, CASE WHEN t.pet_id IS NOT NULL THEN 'donated' ELSE 'pending'
+	# 		 END as status, CASE 
+    #              WHEN t.pet_id IS NOT NULL THEN u.name
+    #              ELSE NULL 
+    #            END as adopted_by FROM pet_table p
+    #     LEFT JOIN transaction_table t ON p.pet_id = t.pet_id AND t.status = 'completed'
+    #     LEFT JOIN user_table u ON t.user_id = u.user_id
+    #     WHERE p.user_id = %s
+    #     ORDER BY 
+    #       CASE WHEN t.pet_id IS NOT NULL THEN 1 ELSE 0 END,
+    #       p.added_at DESC
+    # """, (session['user_id'],))
+	cur.execute("""
+SELECT p.*, 
+       IF(t.pet_id IS NOT NULL, 'donated', 'pending') as status,
+       u.name as adopted_by
+FROM pet_table p
+LEFT JOIN transaction_table t ON p.pet_id = t.pet_id AND t.status = 'completed'
+LEFT JOIN user_table u ON t.user_id = u.user_id
+WHERE p.user_id = %s
+ORDER BY (t.pet_id IS NOT NULL), p.added_at DESC""",(session['user_id'],))
+	# cur.execute("""SELECT p.*, t.user_id AS adopted_by, t.status AS transaction_status 
+	# 		 FROM pet_table p LEFT JOIN transaction_table t ON 
+	# 	p.pet_id = t.pet_id WHERE p.user_id = %s""", (session['user_id'],))
 	donated_pets = cur.fetchall()
+	# print(donated_pets)
+	# cur.execute("SELECT * FROM pet_table WHERE user_id =%s",(session['user_id'],))
+	# listed_pets = cur.fetchall()
+	# adopters = []
+	# for pet in listed_pets:
+	# 	pet_id = pet['pet_id']
+
+	# 	cur.execute("SELECT user_id FROM transaction_table WHERE pet_id=%s",(pet_id,))
+	# 	adopted_by = cur.fetchall()
+	# 	adopters.append(adopted_by)
+	# # donated_pets 
+	# print(adopters)
+	# adoptions = []
+	# extract_tuple = [tup for tup in adopters]
+	# for tup in extract_tuple:
+		
+	# 	for dictionary in tup:
+	# 		user_id = dictionary['user_id']
+	# 		adoptions.append(user_id)
+	# 		print(user_id)
+
+	# cur.execute("SELECT * FROM transaction_table WHERE user_id = %s",(session['user_id'],))
+	# donated_pets = cur.fetchall()
+
+	# listed_pets += donated_pets
+	# print(type(listed_pets))
+	# print(listed_pets)
+	# print(len(listed_pets	))
+	# listed_pets.update(donated_pets)
 
 	cur.execute(""" SELECT p.*, t.status FROM transaction_table t JOIN pet_table p ON t.pet_id = p.pet_id
-		WHERE t.user_id = %s """, (session['user_id'],))
+		WHERE t.user_id = %s AND (t.status = 'completed' or t.status = 'pending') """, (session['user_id'],))
 	
 	adopted_pets = cur.fetchall()
 
@@ -392,8 +457,13 @@ def profile():
 	user = cur.fetchone()
 	cur.close()
 
+	# print("=== DEBUG ===")
+	# for pet in donated_pets:
+	# 	print(f"Pet: {pet['name']}, Status: '{pet['status']}', Adopted_by: {pet['adopted_by']}")
+	# print("=== END DEBUG ===")
+
 	return render_template("profile.html",username=user['name'],city=user['city'],bio='pet lover',
-		donated_pets=donated_pets,adopted_pets=adopted_pets)
+		donated_pets=donated_pets,adopted_pets=adopted_pets) #adoptions = adoptions)
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
@@ -452,7 +522,7 @@ def edit_profile():
 		session['city'] = city
 
 		flash("Profile updated successfully","success")
-		return redirect(url_for('profile'))
+		return redirect(url_for('edit_profile'))
 
 	return render_template("edit_profile.html", user=user)
 

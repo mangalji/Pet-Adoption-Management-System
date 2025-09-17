@@ -14,20 +14,20 @@
 			<img src="{{url_for('static',filename=pet.image)}}" width="300" class="mb-3">
 		{% endif %}
 
-		<p><strong>Category:</strong>{{ pet.category }}</p>
-		<p><strong>Breed:</strong>{{pet.breed}}</p>
-		<p><strong>age:</strong>{{pet.age}}</p>
-		<p><strong>weight:</strong>{{pet.weight}}</p>
-		<p><strong>description:</strong>{{pet.pet_description}}</p>
-		<p><strong>posted at:</strong>{{pet.added_at}}</p>
-		<p><strong>donor username:</strong>{{pet.donor_name}}</p>
+		<p><strong>Category: </strong>{{ pet.category }}</p>
+		<p><strong>Breed: </strong>{{pet.breed}}</p>
+		<p><strong>age: </strong>{{pet.age}}</p>
+		<p><strong>weight: </strong>{{pet.weight}}</p>
+		<p><strong>description: </strong>{{pet.pet_description}}</p>
+		<p><strong>posted at: </strong>{{pet.added_at}}</p>
+		<p><strong>donor username: </strong>{{pet.donor_name}}</p>
 
 		{% if transaction %}
 			<!-- <hr> -->
 			<h3>Adopted by:</h3>
-			<p><strong>name:</strong>{{transaction.adopter_name}}</p>
-			<p><strong>city</strong>{{transaction.adopter_city}}</p>
-			<p><strong>phone:</strong>{{transaction.adopter_phone}}</p>
+			<p><strong>name: </strong>{{transaction.adopter_name}}</p>
+			<p><strong>city </strong>{{transaction.adopter_city}}</p>
+			<p><strong>phone: </strong>{{transaction.adopter_phone}}</p>
 		{% else %}
 			<h3>Status: Pending</h3>
 			<p><i>This pet has not been adopted yet.</i></p>

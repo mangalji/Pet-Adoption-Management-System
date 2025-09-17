@@ -95,20 +95,16 @@ input, textarea
       
       <!-- Dropdown content -->
       <div class="dropdown-content">
-        <div class="setting-wrapper">
-        <a href="#" class="navbar-item setting-link">Setting</a>
-       
-        <div class="setting-popup">
-          <a href="#aboutModal">About</a>
-          <a href="#privacyModal">Privacy Policy</a>
-          
-        </div>
-     
-        </div>
-     
         <a href="{{ url_for('profile') }}">My Profile</a>
-        <a href="{{url_for('support')}}">Customer Support</a>
-        <!-- <a href="{{ url_for('logout') }}">logout</a> -->
+          <a href="{{ url_for('support') }}">Customer Support</a>
+           <div class="setting-wrapper">
+            <a href="#" class="navbar-item setting-link">Setting</a>
+            <div class="setting-popup">
+              <a href="#aboutModal">About</a>
+              <a href="#privacyModal">Privacy Policy</a>
+            </div>
+          </div>
+
       </div>
     
     </li> <!-- 3 Dots Icon -->
@@ -142,7 +138,7 @@ input, textarea
       <br>
       <input type="text" class="textbox" name="pet_name" placeholder="enter pet's name">
       <br>
-      <input type="number" class="textbox" name="pet_age" placeholder="enter pet's age" required>
+      <input type="number" class="textbox" name="pet_age" placeholder="enter pet's age(in months)" required>
       <br>
       <input type="number" class="textbox" name="pet_weight" placeholder="enter pet's weight" required>
       <!-- <input type="textarea" class="textbox" name="med_hist" placeholder="enter medical history"> -->

@@ -36,20 +36,16 @@
       
       <!-- Dropdown content -->
       <div class="dropdown-content">
-        <div class="setting-wrapper">
-        <a href="#" class="navbar-item setting-link">Setting</a>
-       
-        <div class="setting-popup">
-          <a href="#aboutModal">About</a>
-          <a href="#privacyModal">Privacy Policy</a>
-          
-        </div>
-     
-        </div>
-     
-        <a href="{{ url_for('profile', username=session.get('name')) }}">My Profile</a>
-        <a href="{{url_for('support')}}">Customer Support</a>
-        <!-- <a href="{{ url_for('logout') }}">logout</a> -->
+      <a href="{{ url_for('profile') }}">My Profile</a>
+          <a href="{{ url_for('support') }}">Customer Support</a>
+           <div class="setting-wrapper">
+            <a href="#" class="navbar-item setting-link">Setting</a>
+            <div class="setting-popup">
+              <a href="#aboutModal">About</a>
+              <a href="#privacyModal">Privacy Policy</a>
+            </div>
+          </div>
+
       </div>
     
     </li> <!-- 3 Dots Icon -->
@@ -115,21 +111,30 @@
         {% for pet in donated_pets %}
         <div class="pet-card">
           <img src="{{ url_for('static', filename=pet.image) }}" alt="Pet">
-          {% if pet.adopted_by %}
-            <span class="pet-status">Donated</span>
-            <div style="margin-top: 8px; text-align: center;">
-              <a href="{{url_for('view_pet',pet_id=pet.pet_id)}}" class="btn btn-info btn-sm">view pet</a>
-            </div>
-          {% else %}
-            <span class="pet-status">Pending</span>
-            
-          <div style="margin-top: 8px; text-align: left;">
-            <a href="{{url_for('view_pet',pet_id=pet.pet_id)}}" class="btn btn-info btn-sm">view pet</a>
-            <form method="POST" action="{{url_for('delete_pet',pet_id=pet.pet_id)}}" style="display: inline;">
-              <button type="submit" style="text-align: right;" class="btn btn-danger btn-sm">Delete pet</button>
-            </form>
-          </div>
-          {% endif %} 
+          <!-- DEBUG LINES - Add these
+  <p style="color: red;">DEBUG: Pet = {{ pet.name }}</p>
+  <p style="color: blue;">DEBUG: Status = "{{ pet.status }}"</p>
+  <p style="color: green;">DEBUG: Adopted_by = {{ pet.adopted_by }}</p> -->
+  
+  {% if pet.status == 'donated' %}
+    <!-- <p style="color: purple;">CONDITION MATCHED - DONATED</p> -->
+    <span class="pet-status">Donated</span>
+    <!-- <p>Adopted by: {{ pet.adopted_by }}</p> -->
+    <div style="margin-top: 8px; text-align: center;">
+      <a href="{{url_for('view_pet',pet_id=pet.pet_id)}}" class="btn btn-info btn-sm">view pet</a>
+    </div>
+  {% elif pet.status == 'pending' %}
+    <!-- <p style="color: orange;">CONDITION MATCHED - PENDING</p> -->
+    <span class="pet-status">Pending ⏳</span>
+    <div style="margin-top: 8px; text-align: left;">
+      <a href="{{url_for('view_pet',pet_id=pet.pet_id)}}" class="btn btn-info btn-sm">view pet</a>
+      <form method="POST" action="{{url_for('delete_pet',pet_id=pet.pet_id)}}" style="display: inline;">
+        <button type="submit" class="btn btn-danger btn-sm">Delete pet</button>
+      </form>
+    </div>
+  {% else %}
+    <p style="color: red;">NO CONDITION MATCHED - Status: "{{ pet.status }}"</p>
+  {% endif %} 
         </div>
          {% else %}
         <p class="text-center mt-3">No pets donated yet.</p>

@@ -32,20 +32,16 @@
       
       <!-- Dropdown content -->
       <div class="dropdown-content">
-        <div class="setting-wrapper">
-        <a href="#" class="navbar-item setting-link">Setting</a>
-       
-        <div class="setting-popup">
-          <a href="#aboutModal">About</a>
-          <a href="#privacyModal">Privacy Policy</a>
-
-        </div>
-     
-        </div>
-     
         <a href="{{ url_for('profile') }}">My Profile</a>
-        <a href="{{url_for('support')}}">Customer Support</a>
-        <!-- <a href="{{ url_for('logout') }}">logout</a> -->
+          <a href="{{ url_for('support') }}">Customer Support</a>
+           <div class="setting-wrapper">
+            <a href="#" class="navbar-item setting-link">Setting</a>
+            <div class="setting-popup">
+              <a href="#aboutModal">About</a>
+              <a href="#privacyModal">Privacy Policy</a>
+            </div>
+          </div>
+
       </div>
     
     </li> <!-- 3 Dots Icon -->
