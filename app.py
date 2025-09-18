@@ -78,8 +78,8 @@ def registration():
 				flash("Invalid address. Use 10–50 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
 				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 			
-			if not re.match(r"^[A-Za-z\s-]{2,15}$", city):
-				flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2–15 characters).", "danger")
+			if not re.match(r"^[A-Za-z\s-]{3,15}$", city):
+				flash("Invalid city name. Only letters, spaces, and hyphens are allowed (3–15 characters).", "danger")
 				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 
 			cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -136,8 +136,7 @@ def registration():
 
 
 @app.route("/login", methods=['GET', 'POST'])
-def login():
-	msg = ''		
+def login():	
 	# print("request form: ",request.form)
 	if request.method == 'POST':
 		try:
@@ -156,14 +155,14 @@ def login():
 				session['user_id'] = user['user_id']
 				session['name'] = user['name']
 				session['city'] = user['city']
-				msg="logged in successfully"
-				print(msg)
+				flash("logged in successfully")
+				print("logged in successfully")
 				return redirect(url_for('dashboard'))
 			else:
-				msg = 'Incorrect username/email/password!!'
+				flash('Incorrect username/email/password!!')
 		except Exception as e:
 			print("Error: ",str(e))
-	return render_template("login_page.html",msg=msg)
+	return render_template("login_page.html")
 
 
 @app.route('/forgot_pass',methods=["POST","GET"])
@@ -283,11 +282,11 @@ def donate():
 			flash("pet's name would be maximum up to 12 characters and valid.","danger")
 			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_age=pet_age,pet_weight=pet_weight,pet_desc=pet_desc,pet_image=pet_image) 
 		
-		if not re.match(r'^[0-9]{1,2}$', pet_age) or int(pet_age) <= 0 or int(pet_age) > 84:
+		if not re.match(r'^[0-9]{1,4}$', pet_age) and int(pet_age) > 0 and int(pet_age) <= 1000:
 			flash("Pet age must be valid", "danger")
 			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_name=pet_name,pet_weight=pet_weight,pet_desc=pet_desc,pet_image=pet_image)
 
-		if not re.match(r'^[0-9]{1,3}(\.[0-9]{1,2})?$', pet_weight):
+		if not re.match(r'^[0-9]{1,4}(\.[0-9]{1,2})?$', pet_weight):
 			flash("Pet weight must be a valid", "danger")
 			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_name=pet_name,pet_age=pet_age,pet_desc=pet_desc)
 
@@ -405,15 +404,10 @@ def profile():
     #       CASE WHEN t.pet_id IS NOT NULL THEN 1 ELSE 0 END,
     #       p.added_at DESC
     # """, (session['user_id'],))
-	cur.execute("""
-SELECT p.*, 
-       IF(t.pet_id IS NOT NULL, 'donated', 'pending') as status,
-       u.name as adopted_by
-FROM pet_table p
-LEFT JOIN transaction_table t ON p.pet_id = t.pet_id AND t.status = 'completed'
-LEFT JOIN user_table u ON t.user_id = u.user_id
-WHERE p.user_id = %s
-ORDER BY (t.pet_id IS NOT NULL), p.added_at DESC""",(session['user_id'],))
+	cur.execute("""SELECT p.*, IF(t.pet_id IS NOT NULL, 'donated', 'pending') as status,u.name as adopted_by
+				FROM pet_table p LEFT JOIN transaction_table t ON p.pet_id = t.pet_id AND t.status = 'completed'
+				LEFT JOIN user_table u ON t.user_id = u.user_id
+				WHERE p.user_id = %s ORDER BY (t.pet_id IS NOT NULL), p.added_at DESC""",(session['user_id'],))
 	# cur.execute("""SELECT p.*, t.user_id AS adopted_by, t.status AS transaction_status 
 	# 		 FROM pet_table p LEFT JOIN transaction_table t ON 
 	# 	p.pet_id = t.pet_id WHERE p.user_id = %s""", (session['user_id'],))
@@ -457,11 +451,6 @@ ORDER BY (t.pet_id IS NOT NULL), p.added_at DESC""",(session['user_id'],))
 	user = cur.fetchone()
 	cur.close()
 
-	# print("=== DEBUG ===")
-	# for pet in donated_pets:
-	# 	print(f"Pet: {pet['name']}, Status: '{pet['status']}', Adopted_by: {pet['adopted_by']}")
-	# print("=== END DEBUG ===")
-
 	return render_template("profile.html",username=user['name'],city=user['city'],bio='pet lover',
 		donated_pets=donated_pets,adopted_pets=adopted_pets) #adoptions = adoptions)
 
@@ -500,14 +489,25 @@ def edit_profile():
 			flash("Invalid phone no, Please enter valid phone number","danger")
 			return render_template('edit_profile.html',username=username,phone=phone,address=address,city=city,user=user)
 		
-		if not re.match(r"^[A-Za-z0-9\s,.-]{10,30}$", address):
-			flash("Invalid address. Use 10–30 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
+		if not re.match(r"^[A-Za-z0-9\s,.-]{10,50}$", address):
+			flash("Invalid address. Use 10–50 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
 			return render_template('edit_profile.html', username=username, phone=phone, address=address, city=city,user=user)
 		
-		if not re.match(r"^[A-Za-z\s-]{2,15}$", city):
-			flash("Invalid city name. Only letters, spaces, and hyphens are allowed (2-15 characters).", "danger")
+		if not re.match(r"^[A-Za-z\s-]{3,15}$", city):
+			flash("Invalid city name. Only letters, spaces, and hyphens are allowed (3-15 characters).", "danger")
 			return render_template('edit_profile.html', username=username, phone=phone, address=address, city=city,user=user)
 
+		cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+		cur.execute("SELECT * FROM user_table WHERE name=%s", (username,))
+		existing_user = cur.fetchone()
+		cur.close()
+
+		if existing_user:
+			if existing_user['name'] == username:
+				flash("Account with this username already exists","danger")
+			# elif existing_user['phone'] == phone:
+			# 	flash("phone no. is already in use with another account","danger")
+			return render_template('edit_profile.html',username=username,phone=phone,address=address,city=city,user=user)
 
 		cur = mysql.connection.cursor()
 		cur.execute("UPDATE user_table SET name = %s,phone=%s,address=%s,city=%s WHERE user_id=%s",
@@ -522,7 +522,7 @@ def edit_profile():
 		session['city'] = city
 
 		flash("Profile updated successfully","success")
-		return redirect(url_for('edit_profile'))
+		return redirect(url_for('profile'))
 
 	return render_template("edit_profile.html", user=user)
 

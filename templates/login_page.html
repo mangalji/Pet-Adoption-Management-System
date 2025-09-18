@@ -6,109 +6,96 @@
   <title>Login</title>
   <link rel="stylesheet" href="{{url_for('static',filename='styles/style.css')}}">
   <style> 
-    * {
-      font-family: "Poppins", sans-serif;
-    }
-
-    body {
-      min-height: 200vh; /* scroll ke liye height zyada rakhi */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: url("https://images.unsplash.com/photo-1517849845537-4d257902454a") no-repeat center center;
-      background-size: cover;
-      background-attachment: scroll; /* image scroll hogi */
-    }
-
-    header {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      text-align: center;
-      padding: 20px 0;
-      background: purple;
-      color: white;
-      font-size: 26px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      z-index: 10;
-    }
-
-    .container {
-      position: fixed; /* form fixed rahega */
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(255, 255, 255, 0.9);
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-      width: 350px;
-      text-align: center;
-      z-index: 5;
-    }
-
-    .container h2 {
-      margin-bottom: 20px;
-      font-size: 22px;
-      color: #333;
-    }
-
-    .input-field {
-      margin-bottom: 15px;
-      text-align: left;
-    }
-
-    .input-field label {
-      display: block;
-      font-size: 14px;
-      margin-bottom: 5px;
-      color: #444;
-    }
-
-    .input-field input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      outline: none;
-      font-size: 14px;
-    }
-
-    .buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
-    }
-
-    .btn {
-      width: 35%;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .btn-login {
-      background: grey;
-      color: white;
-    }
-
-    .btn-login:hover {
-      background: purple;
-    }
-
-    .btn-register {
-      background: #2196F3;
-      color: white;
-    }
-
-    .btn-register:hover {
-      background: #1976D2;
-    }
-    .flash-messages {
+  * {
+    font-family: "Poppins", sans-serif;
+  }
+  body {
+    min-height: 200vh; /* scroll ke liye height zyada rakhi */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: url("https://images.unsplash.com/photo-1517849845537-4d257902454a") no-repeat center center;
+    background-size: cover;
+    background-attachment: scroll; /* image scroll hogi */
+  }
+  header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    text-align: center;
+    padding: 20px 0;
+    background: purple;
+    color: white;
+    font-size: 26px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    z-index: 10;
+  }
+  .container {
+    position: fixed; /* form fixed rahega */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    width: 350px;
+    text-align: center;
+    z-index: 5;
+  }
+  .container h2 {
+    margin-bottom: 20px;
+    font-size: 22px;
+    color: #333;
+  }
+  .input-field {
+    margin-bottom: 15px;
+    text-align: left;
+  }
+  .input-field label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #444;
+  }
+  .input-field input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+  }
+  .buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  .btn {
+    width: 35%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .btn-login {
+    background: grey;
+    color: white;
+  }
+  .btn-login:hover {
+    background: purple;
+  }
+  .btn-register {
+    background: #2196F3;
+    color: white;
+  }
+  .btn-register:hover {
+    background: #1976D2;
+  }
+.flash-messages {
   margin-bottom: 15px;
 }
 .flash {

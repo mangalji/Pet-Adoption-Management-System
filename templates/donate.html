@@ -132,18 +132,18 @@ input, textarea
       
       <input type="file" name="pet_image" accept="image/*" required>
       <br>
-      <input type="text" class="textbox" name="pet_category" placeholder="enter pet's category" required>
+      <input type="text" class="textbox" name="pet_category" maxlength="10" placeholder="enter pet's category" required>
       <br>
-      <input type="text" class="textbox" name="pet_breed" placeholder="enter pet's breed" required>
+      <input type="text" class="textbox" name="pet_breed" maxlength="18" placeholder="enter pet's breed" required>
       <br>
-      <input type="text" class="textbox" name="pet_name" placeholder="enter pet's name">
+      <input type="text" class="textbox" name="pet_name" maxlength="15" placeholder="enter pet's name">
       <br>
-      <input type="number" class="textbox" name="pet_age" placeholder="enter pet's age(in months)" required>
+      <input type="number" class="textbox" name="pet_age" min="1" max="1000" maxlength="3" placeholder="enter pet's age(in months)" required>
       <br>
-      <input type="number" class="textbox" name="pet_weight" placeholder="enter pet's weight" required>
+      <input type="number" class="textbox" name="pet_weight" max="1000" maxlength="3" placeholder="enter pet's weight" required>
       <!-- <input type="textarea" class="textbox" name="med_hist" placeholder="enter medical history"> -->
       <br>
-      <textarea class="textbox" name="pet_desc" placeholder="enter pet's description" required></textarea>
+      <textarea class="textbox" name="pet_desc" maxlength="50" placeholder="enter pet's description" required></textarea>
       
       <button class="btn" type="submit">ADD PET</button>
 

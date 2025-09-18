@@ -25,8 +25,8 @@
       <form method="POST" action="{{url_for('edit_profile')}}" >
 
         <div class="mb-3">
-          <label for="name">Name:</label>
-          <input type="text" class="form-control" id="name" name="name" maxlength='15' minlength="5" value="{{ user[0] }}" required>
+          <label for="name">Username:</label>
+          <input type="text" class="form-control" id="name" name="name" maxlength='10' minlength="5" value="{{ user[0] }}" required>
         </div>
         <!-- <div class="mb-3">
           <label for="email">Email:</label>
@@ -34,15 +34,15 @@
         </div> -->
         <div class="mb-3">
           <label for="phone">Phone:</label>
-          <input type="text" class="form-control" id="phone" name="phone" value="{{ user[2] }}" required>
+          <input type="text" class="form-control" id="phone" name="phone" minlength="10" maxlength="10" value="{{ user[2] }}" required>
         </div>
         <div class="mb-3">
           <label for="address">Address:</label>
-          <input type="text" class="form-control" id="address" name="address" value="{{ user[3] }}" required>
+          <input type="text" class="form-control" id="address" minlength="10" maxlength="50" name="address" value="{{ user[3] }}" required>
         </div>
         <div class="mb-3">
           <label for="city">City:</label>
-          <input type="text" class="form-control" id="city" name="city" value="{{ user[4] }}" required>
+          <input type="text" class="form-control" id="city" minlength="3" maxlength="15" name="city" value="{{ user[4] }}" required>
         </div>
 
         <button type="submit" class="btn btn-success">Save Changes</button>
