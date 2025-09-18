@@ -61,7 +61,6 @@ def registration():
 				flash("Username must be 5-10 characters in alphanumeric form and also in valid form", "danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
-			# if not re.match(r'^[a-zA-Z0-9]+[a-zA-Z0-9._-]*@[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}$', email):
 			if not re.match(r'^[a-zA-Z][a-zA-Z0-9._-]{0,17}@[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}$', email):
 				flash("Invalid email address", "danger")
 				return render_template('registration.html', username=username,email=email,phone=phone,address=address,city=city,password=password)
