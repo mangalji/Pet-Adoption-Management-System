@@ -7,6 +7,7 @@ import random
 from werkzeug.utils import secure_filename
 import MySQLdb.cursors
 from datetime import datetime
+import uuid
 from werkzeug.security import generate_password_hash,check_password_hash
 from werkzeug.exceptions import RequestEntityTooLarge
 
@@ -150,10 +151,17 @@ def login():
 			user = cur.fetchone()
 
 			if user and check_password_hash(user['password'],password):
+				new_session_id = str(uuid.uuid4())
+
+				cur.execute("update user_table set active_session = %s, last_active = NOW() where user_id = %s",
+							(new_session_id, user['user_id']))
+				mysql.connection.commit()
+
 				session['loggedin'] = True
 				session['user_id'] = user['user_id']
 				session['name'] = user['name']
 				session['city'] = user['city']
+				session['session_id'] = new_session_id
 				flash("logged in successfully")
 				print("logged in successfully")
 				return redirect(url_for('dashboard'))
@@ -162,6 +170,36 @@ def login():
 		except Exception as e:
 			print("Error: ",str(e))
 	return render_template("login_page.html")
+
+@app.before_request
+def enforce_single_session():
+	if 'loggedin' in session and session.get('user_id'):
+		cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+		cur.execute("select active_session from user_table where user_id = %s",(session['user_id'],))
+		row = cur.fetchone()
+		cur.close()
+
+		if row and row['active_session'] != session.get('session_id'):
+			session.clear()
+			return redirect(url_for('login'))
+
+@app.route('/logout')
+def logout():
+
+	if 'user_id' in session:
+		cur = mysql.connection.cursor()
+		cur.execute("update user_table set active_session = NULL, last_active = NOW() where user_id = %s",
+			  		(session['user_id'],))
+		mysql.connection.commit()
+		cur.close()
+
+	session.clear()
+	response = make_response(redirect(url_for('login')))
+	response.headers['Cache-Control'] = 'no-cache, no_store, must_revalidate'
+	response.headers['Pragma'] = 'no-cache'
+	response.headers['Expires'] = '0'
+	return response
+	# return'<script>window.history.forward()</script>'
 
 
 @app.route('/forgot_pass',methods=["POST","GET"])
@@ -217,15 +255,6 @@ def dashboard():
 			call_requests=call_requests
 		)
 
-@app.route('/logout')
-def logout():
-	session.clear()
-	response = make_response(redirect(url_for('login')))
-	response.headers['Cache-Control'] = 'no-cache, no_store, must_revalidate'
-	response.headers['Pragma'] = 'no-cache'
-	response.headers['Expires'] = '0'
-	return response
-	# return'<script>window.history.forward()</script>'
 
 UPLOAD_FOLDER = os.path.join('static','uploads') 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER

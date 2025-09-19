@@ -1,17 +1,19 @@
 desc user_table;
-+------------+--------------+------+-----+---------+----------------+
-| Field      | Type         | Null | Key | Default | Extra          |
-+------------+--------------+------+-----+---------+----------------+
-| user_id    | int          | NO   | PRI | NULL    | auto_increment |
-| name       | varchar(255) | YES  |     | NULL    |                |
-| phone      | varchar(255) | YES  |     | NULL    |                |
-| email      | varchar(255) | YES  |     | NULL    |                |
-| password   | varchar(255) | YES  |     | NULL    |                |
-| address    | varchar(255) | YES  |     | NULL    |                |
-| city       | varchar(100) | YES  |     | NULL    |                |
-| created_at | datetime(6)  | YES  |     | NULL    |                |
-| last_login | datetime(6)  | YES  |     | NULL    |                |
-+------------+--------------+------+-----+---------+----------------+
++----------------+--------------+------+-----+---------+----------------+
+| Field          | Type         | Null | Key | Default | Extra          |
++----------------+--------------+------+-----+---------+----------------+
+| user_id        | int          | NO   | PRI | NULL    | auto_increment |
+| name           | varchar(255) | YES  | UNI | NULL    |                |
+| phone          | varchar(12)  | YES  |     | NULL    |                |
+| email          | varchar(255) | YES  | UNI | NULL    |                |
+| password       | varchar(255) | YES  |     | NULL    |                |
+| address        | varchar(255) | YES  |     | NULL    |                |
+| city           | varchar(100) | YES  |     | NULL    |                |
+| created_at     | datetime(6)  | YES  |     | NULL    |                |
+| user_desc      | varchar(255) | YES  |     | NULL    |                |
+| active_session | varchar(255) | YES  |     | NULL    |                |
+| last_active    | timestamp    | YES  |     | NULL    |                |
++----------------+--------------+------+-----+---------+----------------+
 
 
 
