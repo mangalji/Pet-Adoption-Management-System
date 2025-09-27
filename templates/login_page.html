@@ -125,7 +125,7 @@
 <body>
 	<header><a href="{{url_for('home')}}" style="text-decoration: none; color: skyblue;">Pet Adoption Management System</a></header>
 	 <div class="container"> 
-   		<div>{{ msg }}</div>
+   		<!-- <div>{{ msg }}</div> -->
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="flash-messages">

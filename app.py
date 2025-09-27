@@ -59,27 +59,27 @@ def registration():
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
 			if ( not re.match(r'^(?!\d)(?!.*(.)\1\1)(?!.*__)(?!.*_$)(?!^_)(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9_]{5,10}$', username)):
-				flash("Username must be 5-10 characters in alphanumeric form and also in valid form", "danger")
+				flash("Invalid! Username must be 5-10 characters in alphanumeric form and also in valid form", "danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
 			if not re.match(r'^[a-zA-Z][a-zA-Z0-9._-]{0,17}@[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}$', email):
-				flash("Invalid email address", "danger")
+				flash("Invalid! email address", "danger")
 				return render_template('registration.html', username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
 			if not re.match(r'^(?!.*(\d)\1{9})(?![6-9]0{9})[6-9]\d{9}$', phone):
-				flash("Invalid phone no, Please enter valid phone number","danger")
+				flash("Invalid! phone no, Please enter valid phone number","danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
 			if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,12}$",password):
-				flash("password must be 6-12 digit long, contain atleast 1 letter, 1 number and 1 special character","danger")
+				flash("Invalid! password must be 6-12 digit long, contain atleast 1 letter, 1 number and 1 special character","danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
 
-			if not re.match(r"^[A-Za-z0-9\s,.-]{10,50}$", address):
-				flash("Invalid address. Use 10–50 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
+			if not re.match(r"^[A-Za-z0-9\s.,#'-]{10,50}$", address):
+				flash("Invalid! address. Use 10–50 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
 				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 			
 			if not re.match(r"^[A-Za-z\s-]{3,15}$", city):
-				flash("Invalid city name. Only letters, spaces, and hyphens are allowed (3–15 characters).", "danger")
+				flash("Invalid! city name. Only letters, spaces, and hyphens are allowed (3–15 characters).", "danger")
 				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 
 			cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -89,9 +89,9 @@ def registration():
 		
 			if existing_user:
 				if existing_user['name'] == username:
-					flash("Account with this username already exists","danger")
+					flash("Invalid! Account with this username already exists","danger")
 				elif existing_user['email'] == email:
-					flash("Email id is already in use with another account","danger")
+					flash("Invalid! Email id is already in use with another account","danger")
 				return render_template('registration.html',username=username, email=email, phone=phone, address=address, city=city, password=password) 
 
 
@@ -310,9 +310,10 @@ def donate():
 			flash("pet's name would be maximum up to 12 characters and valid.","danger")
 			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_age=pet_age,pet_weight=pet_weight,pet_desc=pet_desc,pet_image=pet_image) 
 		
-		if not re.match(r'^[0-9]{1,4}$', pet_age) and int(pet_age) > 0 and int(pet_age) <= 1000:
+		if not re.match(r'^[0-9]{1,4}$', pet_age) or not (0 < int(pet_age) <= 1000):
 			flash("Pet age must be valid", "danger")
-			return render_template('donate.html',pet_category=pet_category,pet_breed=pet_breed,pet_name=pet_name,pet_weight=pet_weight,pet_desc=pet_desc,pet_image=pet_image)
+			return render_template('donate.html', pet_category=pet_category, pet_breed=pet_breed, pet_name=pet_name, pet_weight=pet_weight, pet_desc=pet_desc, pet_image=pet_image)
+
 
 		if not re.match(r'^[0-9]{1,4}(\.[0-9]{1,2})?$', pet_weight):
 			flash("Pet weight must be a valid", "danger")
@@ -632,95 +633,3 @@ def adopter_profile(adopterid):
 if __name__ == "__main__":
 	app.run()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		# flash("No update request found!")
-		# flash(f"{field.capitalize()} updated successfully!")
-		# flash("Invalid OTP. Please try again.")
-		# allowed_fields = ['name','email','phone','address','city']
-		# if field not in allowed_fields:
-		# 	flash('Invalid field','danger')
-		# 	return redirect(url_for('edit_profile'))
