@@ -174,4 +174,4 @@ def test_donate_pet_successfull(client):
 	with client.session_transaction() as sess:
 		sess['user_id'] = 1
 		sess['name'] = 'TestUser'
-	response = client.post()
+	response = client.post('/')
