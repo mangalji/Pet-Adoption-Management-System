@@ -6,137 +6,196 @@
   <title>Pet Adoption System</title>
 
   <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
     body {
-      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
-      overflow-x: hidden;
+      font-family: 'Nunito', sans-serif;
+    }
+    /* Navbar */
+    .navbar {
+      background: #6a0dad;
+    }
+    .navbar-brand, .nav-link {
+      color: #fff !important;
+      font-weight: 600;
+    }
+    .nav-link:hover {
+      color: #ffd54f !important;
     }
 
-    #main_heading {
-      font-size: 60px;
-      color: #6a0dad;
-      margin-top: -85px;
+    /* Hero Section */
+    .hero {
+      background: url("{{ url_for('static', filename='images/pet_photo.avif') }}") center/cover no-repeat;
+      color: white;
+      height: 90vh;
+      display: flex;
+      align-items: center;
       text-align: center;
-      font-weight: bold;
+      position: relative;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      top:0; left:0; right:0; bottom:0;
+      background: rgba(0,0,0,0.5);
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+    }
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 900;
+      margin-top: -170px;
+
+    }
+    .hero p {
+      font-size: 1.2rem;
+      margin: 20px 0;
     }
 
-    .button {
-      background: rgba(106, 13, 173, 0.8);
-      color: white;
-      padding: 18px 30px;
-      font-size: 24px;
-      border: none;
-      border-radius: 12px;
-      transition: all 0.3s ease;
-      text-transform: uppercase;
-      width: 250px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    /* Features */
+    .feature-icon {
+      font-size: 2.5rem;
+      color: #6a0dad;
+      margin-bottom: 15px;
     }
 
-    .button:hover {
-      background: #8e24aa;
-      box-shadow: 0 12px 24px rgba(0,0,0,0.3);
-      transform: translateY(-3px);
-    }
-
-    a {
-      text-decoration: none;
-      color: white;
-    }
-
-    .carousel-inner img {
-      object-fit: cover;
-      height: 70vh;
-    }
-
-    .pet-images {
-      margin-top: 40px;
-    }
-
+    /* Pet Gallery */
     .pet-img {
-      width: 150px;
-      height: 150px;
+      width: 100%;
+      height: 250px;
       object-fit: cover;
-      border-radius: 50%;
-      box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
-      transition: transform 0.3s ease;
+      border-radius: 12px;
+      transition: transform 0.3s;
     }
-
     .pet-img:hover {
       transform: scale(1.05);
     }
 
-    .button-group {
-      margin-top: 40px;
+    /* Footer */
+    footer {
+      background: #6a0dad;
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+    }
+    footer a {
+      color: #ffd54f;
+      margin: 0 10px;
     }
   </style>
 </head>
-
 <body>
 
-  <a href="{{url_for('home')}}"><img id="web_logo" src="{{ url_for('static', filename='logo/PetWallah-logo.png') }}" alt="website's logo" width="70px" height="90px"></a> 
-
-  <h1 id="main_heading">Pet Adoption Management</h1>
-
-  <!-- Carousel Section -->
-  <div id="carouselExample" class="carousel slide mt-4">
-    <div class="carousel-inner">
-      <div class="carousel-item active">
-        <img src="{{ url_for('static', filename='images/bg_project2.jpg') }}" class="d-block w-100" alt="Pet image">
-      </div>
-      <div class="carousel-item">
-        <img src="{{ url_for('static', filename='images/bg_project3.jpg') }}" class="d-block w-100" alt="Pet image">
-      </div>
-      <div class="carousel-item">
-        <img src="{{ url_for('static', filename='images/bg_project4.jpg') }}" class="d-block w-100" alt="Pet image">
-      </div>
-    </div>
-    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
-      <span class="carousel-control-prev-icon"></span>
-      <span class="visually-hidden">Previous</span>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="#">
+      <img src="{{ url_for('static', filename='logo/PetWallah-logo.png') }}" alt="logo" width="40" height="50">
+      Pet Adoption
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
     </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
-      <span class="carousel-control-next-icon"></span>
-      <span class="visually-hidden">Next</span>
-    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#Home">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="#About">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="#pets">Pets</a></li>
+        <li class="nav-item"><a class="btn btn-warning ms-3" href="{{url_for('login')}}">Login</a></li>
+        <li class="nav-item"><a class="btn btn-light ms-2" href="{{url_for('registration')}}">Register</a></li>
+      </ul>
+    </div>
   </div>
+</nav>
 
-  <!-- Buttons Section -->
-  <div class="container text-center button-group">
-    <div class="row justify-content-center gap-4">
-      <div class="col-auto">
-        <a href="{{url_for('registration')}}"><button class="button">Registration</button></a>
+<!-- Hero -->
+<section id="Home" class="hero d-flex">
+  <div class="container hero-content">
+    <h1>Find Your Perfect Pet</h1>
+    <p>Adopt, don’t shop. Give a lovely home to pets in need.</p>
+    <a href="{{url_for('registration')}}" class="btn btn-warning btn-lg mt-3">Get Started</a>
+  </div>
+</section>
+
+<!-- About -->
+<section id="About" class="py-5 text-center">
+  <div class="container">
+    <h2 class="fw-bold mb-4">About Us</h2>
+    <p class="lead text-muted">
+      Pet Adoption Management System makes it easy to adopt and donate pets. 
+      We connect loving families with pets who need a forever home.
+    </p>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row text-center g-4">
+      <div class="col-md-4">
+        <i class="bi bi-heart-fill feature-icon"></i>
+        <h5>Easy Adoption</h5>
+        <p>Find your pet quickly with our easy adoption process.</p>
       </div>
-      <div class="col-auto">
-        <a href="{{url_for('login')}}"><button class="button">Login</button></a>
+      <div class="col-md-4">
+        <i class="bi bi-people-fill feature-icon"></i>
+        <h5>Trusted Community</h5>
+        <p>Join a trusted network of pet lovers and volunteers.</p>
+      </div>
+      <div class="col-md-4">
+        <i class="bi bi-shield-lock-fill feature-icon"></i>
+        <h5>Secure Platform</h5>
+        <p>Your data and transactions are completely safe.</p>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- Pet Images Section -->
-  <div class="container pet-images text-center">
-    <div class="row justify-content-center gap-4">
-      <div class="col-auto">
-        <img src="{{ url_for('static', filename='images/pet1.jpg') }}" alt="Pet 1" class="pet-img">
-      </div>
-      <div class="col-auto">
-        <img src="{{ url_for('static', filename='images/pet2.jpg') }}" alt="Pet 2" class="pet-img">
-      </div>
-      <div class="col-auto">
-        <img src="{{ url_for('static', filename='images/pet3.jpg') }}" alt="Pet 3" class="pet-img">
-      </div>
-      <div class="col-auto">
-        <img src="{{ url_for('static', filename='images/pet4.jpg') }}" alt="Pet 4" class="pet-img">
-      </div>
+<!-- Pet Gallery -->
+<section id="pets" class="py-5">
+  <div class="container">
+    <h2 class="fw-bold text-center mb-4">Our Lovely Pets</h2>
+    <div class="row g-4">
+      <div class="col-md-3 col-sm-6"><img src="{{ url_for('static', filename='images/pet1.jpg') }}" class="pet-img"></div>
+      <div class="col-md-3 col-sm-6"><img src="{{ url_for('static', filename='images/pet2.jpg') }}" class="pet-img"></div>
+      <div class="col-md-3 col-sm-6"><img src="{{ url_for('static', filename='images/pet3.jpg') }}" class="pet-img"></div>
+      <div class="col-md-3 col-sm-6"><img src="{{ url_for('static', filename='images/pet4.jpg') }}" class="pet-img"></div>
     </div>
   </div>
+</section>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Call to Action -->
+<section class="py-5 text-center bg-light">
+  <div class="container">
+    <h2 class="fw-bold">Join Us Today!</h2>
+    <p class="lead text-muted">Be part of our mission to give every pet a loving home.</p>
+    <a href="{{url_for('registration')}}" class="btn btn-primary btn-lg">Register Now</a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <p>&copy; 2025 Pet Adoption System | All Rights Reserved</p>
+    <div>
+      <a href="#"><i class="bi bi-facebook"></i></a>
+      <a href="#"><i class="bi bi-instagram"></i></a>
+      <a href="#"><i class="bi bi-twitter"></i></a>
+    </div>
+  </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

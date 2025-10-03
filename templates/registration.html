@@ -6,10 +6,16 @@
   <title>Register</title>
   <link rel="stylesheet" href="{{url_for('static',filename='styles/style.css')}}">
   <style> 
-* {
+    *{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
   font-family: "Poppins", sans-serif;
 }
 body {
+  background-color: #fafafa;
+  font-family: 'Poppins', sans-serif;
+  color: #333;
   min-height: 220vh;
   display: flex;
   justify-content: center;
@@ -135,9 +141,9 @@ header {
 </head>
 
 <body>
-	<header><a href="{{url_for('home')}}" style="text-decoration: none; color: skyblue;">Pet Adoption Management System</a></header>
-	<div class="container"> 
-		<h2>Register</h2>
+  <header><a href="{{url_for('home')}}" style="text-decoration: none; color: skyblue;">Pet Adoption Management System</a></header>
+  <div class="container"> 
+    <h2>Register</h2>
     
      {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -149,51 +155,51 @@ header {
       {% endif %}
     {% endwith %}
 
-		<form method="POST" action="{{ url_for('registration') }}" autocomplete="off">
-			<div class="input-field">
-				<label for="username">Username</label>
-				<input type="text" name="username" value="{{ username or ''}}" minlength="5" maxlength="10" placeholder="Enter username" autocomplete="off" >
+    <form method="POST" action="{{ url_for('registration') }}" autocomplete="off">
+      <div class="input-field">
+        <label for="username">Username</label>
+        <input type="text" name="username" value="{{ username or ''}}" minlength="5" maxlength="10" placeholder="Enter username" autocomplete="off" >
         <p>Username must be 5-10 characters with at least 1 letter and 1 number</p>
-			</div>
+      </div>
 
-			<div class="input-field">
-				<label for="email">Email</label>
-				<input type="email" name="email" value="{{ email or '' }}" maxlength="25" placeholder="Enter your email" autocomplete="off">
-			</div>
+      <div class="input-field">
+        <label for="email">Email</label>
+        <input type="email" name="email" value="{{ email or '' }}" maxlength="25" placeholder="Enter your email" autocomplete="off">
+      </div>
 
-			<div class="input-field">
-				<label for="phone">Phone Number</label>
-				<input type="tel" name="phone" value="{{ phone or ''}}" maxlength="10" minlength="10" placeholder="Enter phone number"autocomplete="off" >
-			</div>
+      <div class="input-field">
+        <label for="phone">Phone Number</label>
+        <input type="tel" name="phone" value="{{ phone or ''}}" maxlength="10" minlength="10" placeholder="Enter phone number"autocomplete="off" >
+      </div>
 
 
-			<div class="input-field">
-				<label for="address">Address</label>
-				<input type="text" name="address" value="{{ address or ''}}" minlength="10" maxlength="50" placeholder="Enter address"autocomplete="off" >
+      <div class="input-field">
+        <label for="address">Address</label>
+        <input type="text" name="address" value="{{ address or ''}}" minlength="10" maxlength="50" placeholder="Enter address"autocomplete="off" >
         <p>Address must be 10–50 characters long.</p>
-			</div>
+      </div>
 
-			<div class="input-field">
-				<label for="city">City</label>
-				<input type="text" name="city" value="{{ city or ''}}" minlength="3" maxlength="15" placeholder="Enter city" autocomplete="off">
+      <div class="input-field">
+        <label for="city">City</label>
+        <input type="text" name="city" value="{{ city or ''}}" minlength="3" maxlength="15" placeholder="Enter city" autocomplete="off">
         <p>City name must be 3–15 characters</p>
-			</div>
+      </div>
 
-			<div class="input-field">
-				<label for="password">Password</label>
-				<input type="password" name="password" value="{{password or ''}}" minlength="6" maxlength="12" placeholder="Enter password" autocomplete="off">
+      <div class="input-field">
+        <label for="password">Password</label>
+        <input type="password" name="password" value="{{password or ''}}" minlength="6" maxlength="12" placeholder="Enter password" autocomplete="off">
         <p>password must be 6-12 digit long, contain atleast 1 letter, 1 number and 1 special character.</p>
-			</div>
+      </div>
 
-			<div class="otp-section">
-				<button type="submit" name="generate_otp" class="otp-btn">Generate OTP</button>
-				<input type="text" class="otp-input" name="otp" placeholder="Enter OTP" autocomplete="off">
-			</div>
-			
+      <div class="otp-section">
+        <button type="submit" name="generate_otp" class="otp-btn">Generate OTP</button>
+        <input type="text" class="otp-input" name="otp" placeholder="Enter OTP" autocomplete="off">
+      </div>
+      
       <button class="btn" type="submit">Register</button>
-		</form>
+    </form>
 
-		<p class="bottom">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
-	</div>
+    <p class="bottom">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+  </div>
 </body>
 </html>

@@ -7,9 +7,15 @@
   <link rel="stylesheet" href="{{url_for('static',filename='styles/style.css')}}">
   <style> 
   * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
     font-family: "Poppins", sans-serif;
   }
   body {
+    background-color: #fafafa;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
     min-height: 200vh; /* scroll ke liye height zyada rakhi */
     display: flex;
     justify-content: center;
@@ -123,9 +129,9 @@
 </head>
 
 <body>
-	<header><a href="{{url_for('home')}}" style="text-decoration: none; color: skyblue;">Pet Adoption Management System</a></header>
-	 <div class="container"> 
-   		<!-- <div>{{ msg }}</div> -->
+  <header><a href="{{url_for('home')}}" style="text-decoration: none; color: skyblue;">Pet Adoption Management System</a></header>
+   <div class="container"> 
+      <!-- <div>{{ msg }}</div> -->
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="flash-messages">
@@ -135,36 +141,36 @@
         </div>
       {% endif %}
     {% endwith %}
-	 	<h2>Login</h2>
+    <h2>Login</h2>
 
-	 	<form action="/login" method="POST">
+    <form action="/login" method="POST">
       
-	 	<div class="input-field">
-        		
+    <div class="input-field">
+
         <label for="username">Username</label>
         <input type="text" name="username" id="username" minlength="5" maxlength="10" placeholder="Enter your username" required>
       
-      	</div>
-  		<div class="input-field">
-    		
+        </div>
+      <div class="input-field">
+        
         <label for="email">Email</label>
-    	<input type="email" name = "email" id="email" maxlength="25" placeholder="Enter your email" required>
-  		
-    	</div>
-  		<div class="input-field">
-    	
+      <input type="email" name = "email" id="email" maxlength="25" placeholder="Enter your email" required>
+      
+      </div>
+      <div class="input-field">
+      
         <label for="password">Password</label>
-    	<input type="password" name="password" id="password" minlength="6" maxlength="12" placeholder="Enter your password" required>
-  		
-	    </div>
+      <input type="password" name="password" id="password" minlength="6" maxlength="12" placeholder="Enter your password" required>
+      
+      </div>
 
-	 		<button class="btn btn-login" type="submit">Login</button>
+      <button class="btn btn-login" type="submit">Login</button>
       <a class="btn btn-login" href="{{ url_for('forgot_password') }}" style="margin-right: 15px; text-decoration: none;">Forgot Password?</a>
 
-	 	</form>
+    </form>
 
-	 	<p class="bottom">Don't have an account? <a href="{{ url_for('registration') }}">Register here</a></p>
-		
-	</div>
+    <p class="bottom">Don't have an account? <a href="{{ url_for('registration') }}">Register here</a></p>
+    
+  </div>
 </body>
 </html>
