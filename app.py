@@ -29,6 +29,8 @@ app.config['MYSQL_DB'] = 'pet_adoption_system_database'
 
 mysql = MySQL(app)
 
+inactivity_time_in_seconds = 200 
+
 @app.route("/")
 def home():
 	return render_template("index.html")
@@ -171,17 +173,44 @@ def login():
 			print("Error: ",str(e))
 	return render_template("login_page.html")
 
+
 @app.before_request
 def enforce_single_session():
 	if 'loggedin' in session and session.get('user_id'):
 		cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-		cur.execute("select active_session from user_table where user_id = %s",(session['user_id'],))
-		row = cur.fetchone()
+		cur.execute("SELECT active_session FROM user_table WHERE user_id = %s",(session['user_id'],))
+		user = cur.fetchone()
 		cur.close()
 
-		if row and row['active_session'] != session.get('session_id'):
+		if user and user['active_session'] != session.get('session_id'):
 			session.clear()
+			flash("you have been log out because of login in other device","info")
 			return redirect(url_for('login'))
+
+@app.before_request
+def enforce_session_inactivity_timeout():
+	if 'loggedin' in session and session.get('user_id'):
+		cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+		cur.execute("SELECT last_active FROM user_table WHERE user_id=%s",(session["user_id"],))
+		user = cur.fetchone()
+
+		if user and user['last_active']:
+			last_active = user['last_active']
+			now = datetime.now()
+
+			if (now - last_active).total_seconds() > inactivity_time_in_seconds:
+				cur.execute("UPDATE user_table SET active_session = NULL WHERE user_id=%s",(session['user_id'],))
+				mysql.connection.commit()
+				cur.close()
+				session.clear()
+				flash("You have been logout due to inactivity","info")
+				return redirect(url_for("login"))
+
+
+		cur.execute("UPDATE user_table SET last_active = NOW() WHERE user_id=%s", (session['user_id'],))
+		mysql.connection.commit()
+		cur.close()
+
 
 @app.route('/logout')
 def logout():
@@ -189,7 +218,7 @@ def logout():
 	if 'user_id' in session:
 		cur = mysql.connection.cursor()
 		cur.execute("update user_table set active_session = NULL, last_active = NOW() where user_id = %s",
-			  		(session['user_id'],))
+		(session['user_id'],))
 		mysql.connection.commit()
 		cur.close()
 
@@ -338,15 +367,30 @@ def adopt():
 	if 'user_id' not in session:
 		return redirect(url_for('login'))
 	
+	page = request.args.get('page',1,type=int)
+	per_page = 6
+
 	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-	cur.execute("""SELECT p.*,u.name AS donor_name,(SELECT cr.status FROM call_request_table cr WHERE cr.pet_id = p.pet_id AND cr.user_id = %s ORDER BY cr.request_id DESC LIMIT 1) AS request_status
-	FROM pet_table p JOIN user_table u ON u.user_id = p.user_id WHERE p.user_id != %s AND p.pet_id NOT IN 
-	(SELECT pet_id FROM transaction_table WHERE status = 'completed')""",(session['user_id'],session['user_id']))
+
+	cur.execute("""SELECT COUNT(*) as total FROM pet_table p WHERE p.user_id != %s AND p.pet_id 
+		NOT IN (SELECT pet_id FROM transaction_table WHERE status = 'completed')""",(session['user_id'],))
+	result = cur.fetchone()
+	total_pets = result['total'] if result else 0
+	total_pages = (total_pets + per_page - 1)//per_page if total_pets > 0 else 1
+
+	offset = (page - 1) * per_page
+
+
+	cur.execute("""SELECT p.*, u.name AS donor_name,(SELECT cr.status FROM call_request_table cr  
+		WHERE cr.pet_id = p.pet_id AND cr.user_id = %s  ORDER BY cr.request_id DESC LIMIT 1) AS request_status 
+		FROM pet_table p JOIN user_table u ON u.user_id = p.user_id WHERE p.user_id != %s AND p.pet_id 
+		NOT IN (    SELECT pet_id FROM transaction_table WHERE status = 'completed')
+        LIMIT %s OFFSET %s""", (session['user_id'], session['user_id'], per_page, offset))	
 	
 	pets = cur.fetchall()
 	cur.close()
 
-	return render_template('adopt.html',username = session.get('name'), city=session.get("city"), pets=pets)
+	return render_template('adopt.html',username = session.get('name'), city=session.get("city"), pets=pets, page=page, total_pages=total_pages, total_pets=total_pets)
 
 @app.route('/create_call_request/<int:pet_id>',methods=['POST'])
 def create_call_request(pet_id):
@@ -355,7 +399,7 @@ def create_call_request(pet_id):
 		
 	cur = mysql.connection.cursor()
 
-	cur.execute('Insert into call_request_table(pet_id,user_id,status) VALUES (%s,%s,%s)',
+	cur.execute('INSERT INTO call_request_table(pet_id,user_id,status) VALUES (%s,%s,%s)',
 			 (pet_id, session['user_id'],'pending'	))
 	mysql.connection.commit()
 	cur.close()
