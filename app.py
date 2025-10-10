@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request 
-from flask import redirect, url_for, session, make_response, flash
+from flask import redirect, url_for, session, make_response, flash, request
 from flask_mysqldb import MySQL
 import re
 import os
@@ -10,6 +10,15 @@ from datetime import datetime
 import uuid
 from werkzeug.security import generate_password_hash,check_password_hash
 from werkzeug.exceptions import RequestEntityTooLarge
+from blinker import Namespace
+
+
+my_signals = Namespace()
+
+registered = my_signals.signal('user registered successfully')
+logged_in = my_signals.signal('user logged in successfully')
+donate_pet = my_signals.signal('pet listed successfully')
+pet_donated_completely = my_signals.signal('pet donated successfully')
 
 
 now = datetime.now()
@@ -126,6 +135,11 @@ def registration():
 				mysql.connection.commit()
 				cur.close()
 
+				registered.send(app, user_data={
+					'username':username,
+					'email':email,
+					'created_at':created_at
+					})
 
 				session.pop('register_data',None)
 				flash("Registration Successful! Please login.", "success")
@@ -166,6 +180,11 @@ def login():
 				session['session_id'] = new_session_id
 				flash("logged in successfully")
 				print("logged in successfully")
+
+				logged_in.send(app, user_data={
+					'username':username,
+					'user_id':user['user_id']
+					})
 				return redirect(url_for('dashboard'))
 			else:
 				flash('Incorrect username/email/password!!')
@@ -357,6 +376,12 @@ def donate():
 				pet_weight,pet_desc,added_at,
 				image_db_path, session.get('user_id')))
 		mysql.connection.commit()
+
+		donate_pet.send(app, pet_data={
+			'name':pet_name,
+			'category':pet_category,
+			'user_id':session['user_id']
+			})
 		return redirect(url_for('dashboard'))
 
 	return render_template("donate.html",username=session.get("name"))
@@ -454,6 +479,11 @@ def complete_transaction(request_id):
 			VALUES (%s,%s,%s,%s)""",(request_id,row['pet_id'],row['adopter_id'],'completed'))
 		
 		mysql.connection.commit()
+
+		pet_donated_completely.send(app, transaction_data={
+			'request_id':request_id,
+			'adopter_id':row['adopter_id']
+			})
 	
 	cur.close()
 	return redirect(url_for('dashboard'))
@@ -464,56 +494,13 @@ def profile():
 		return redirect(url_for('login'))
 
 	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-	# cur.execute("""
-	# 		 SELECT p.*, CASE WHEN t.pet_id IS NOT NULL THEN 'donated' ELSE 'pending'
-	# 		 END as status, CASE 
-    #              WHEN t.pet_id IS NOT NULL THEN u.name
-    #              ELSE NULL 
-    #            END as adopted_by FROM pet_table p
-    #     LEFT JOIN transaction_table t ON p.pet_id = t.pet_id AND t.status = 'completed'
-    #     LEFT JOIN user_table u ON t.user_id = u.user_id
-    #     WHERE p.user_id = %s
-    #     ORDER BY 
-    #       CASE WHEN t.pet_id IS NOT NULL THEN 1 ELSE 0 END,
-    #       p.added_at DESC
-    # """, (session['user_id'],))
+
 	cur.execute("""SELECT p.*, IF(t.pet_id IS NOT NULL, 'donated', 'pending') as status,u.name as adopted_by
 				FROM pet_table p LEFT JOIN transaction_table t ON p.pet_id = t.pet_id AND t.status = 'completed'
 				LEFT JOIN user_table u ON t.user_id = u.user_id
 				WHERE p.user_id = %s ORDER BY (t.pet_id IS NOT NULL), p.added_at DESC""",(session['user_id'],))
-	# cur.execute("""SELECT p.*, t.user_id AS adopted_by, t.status AS transaction_status 
-	# 		 FROM pet_table p LEFT JOIN transaction_table t ON 
-	# 	p.pet_id = t.pet_id WHERE p.user_id = %s""", (session['user_id'],))
+
 	donated_pets = cur.fetchall()
-	# print(donated_pets)
-	# cur.execute("SELECT * FROM pet_table WHERE user_id =%s",(session['user_id'],))
-	# listed_pets = cur.fetchall()
-	# adopters = []
-	# for pet in listed_pets:
-	# 	pet_id = pet['pet_id']
-
-	# 	cur.execute("SELECT user_id FROM transaction_table WHERE pet_id=%s",(pet_id,))
-	# 	adopted_by = cur.fetchall()
-	# 	adopters.append(adopted_by)
-	# # donated_pets 
-	# print(adopters)
-	# adoptions = []
-	# extract_tuple = [tup for tup in adopters]
-	# for tup in extract_tuple:
-		
-	# 	for dictionary in tup:
-	# 		user_id = dictionary['user_id']
-	# 		adoptions.append(user_id)
-	# 		print(user_id)
-
-	# cur.execute("SELECT * FROM transaction_table WHERE user_id = %s",(session['user_id'],))
-	# donated_pets = cur.fetchall()
-
-	# listed_pets += donated_pets
-	# print(type(listed_pets))
-	# print(listed_pets)
-	# print(len(listed_pets	))
-	# listed_pets.update(donated_pets)
 
 	cur.execute(""" SELECT p.*, t.status FROM transaction_table t JOIN pet_table p ON t.pet_id = p.pet_id
 		WHERE t.user_id = %s AND (t.status = 'completed' or t.status = 'pending') """, (session['user_id'],))
@@ -673,6 +660,22 @@ def adopter_profile(adopterid):
 
 	return render_template('other_person_profile.html',username=user_data['name'],city=user_data['city'],donated_pets=donated_pets,adopted_pets=adopted_pets)
 
+
+@registered.connect_via(app)
+def after_registered(sender, user_data, **extra):
+	print(f"user registered: {user_data['username']} at {user_data['created_at']}")
+
+@logged_in.connect_via(app)
+def after_login(sender,user_data,**extra):
+	print(f"user logged in: {user_data['username']}, ID {user_data['user_id']}")
+
+@donate_pet.connect_via(app)
+def after_pet_listed(sender,pet_data,**extra):
+	print(f"listed pet: {pet_data['name']}, {pet_data['category']}")
+
+@pet_donated_completely.connect_via(app)
+def after_pet_donated(sender,transaction_data,**extra):
+	print(f"pet transaction completed for request {transaction_data['request_id']} ")
 
 if __name__ == "__main__":
 	app.run()
