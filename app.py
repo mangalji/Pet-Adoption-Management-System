@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request 
+from flask import Flask, render_template, request
 from flask import redirect, url_for, session, make_response, flash, request
 from flask_mysqldb import MySQL
 import re
@@ -11,7 +11,7 @@ import uuid
 from werkzeug.security import generate_password_hash,check_password_hash
 from werkzeug.exceptions import RequestEntityTooLarge
 from blinker import Namespace
-
+from flask_socketio import SocketIO, emit
 
 my_signals = Namespace()
 
@@ -19,7 +19,10 @@ registered = my_signals.signal('user registered successfully')
 logged_in = my_signals.signal('user logged in successfully')
 donate_pet = my_signals.signal('pet listed successfully')
 pet_donated_completely = my_signals.signal('pet donated successfully')
-
+call_request_created = my_signals.signal("call request create and sent")
+call_request_cancelled = my_signals.signal("call request cancelled")
+call_request_accepted = my_signals.signal("call request accepted")
+call_request_rejected = my_signals.signal("call request rejected")
 
 now = datetime.now()
 
@@ -27,9 +30,8 @@ def generate_otp():
 	return str(random.randint(100000,999999))
 
 app = Flask(__name__)
-
 app.secret_key = "supersecretkey"
-
+# socketio = SocketIO(app)
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'RajMangal'
@@ -40,9 +42,19 @@ mysql = MySQL(app)
 
 inactivity_time_in_seconds = 200 
 
+def create_notification(user_id, message, notification_type):
+	cur = mysql.connection.cursor()
+	cur.execute("""INSERT INTO notification_table(user_id,message,notification_type, is_read, created_at) 
+		VALUES (%s,%s,%s,FALSE,NOW())""",(user_id,message,notification_type))
+	mysql.connection.commit()
+	cur.close()
+
 @app.route("/")
 def home():
 	return render_template("index.html")
+
+# def notify_user(user_id,message):
+# 	socketio.emit('notification', {'msg':message}, room=str(user_id))
 
 @app.route('/registration', methods=['GET','POST'])
 def registration():
@@ -107,8 +119,15 @@ def registration():
 
 
 			otp = generate_otp()
-			session['register_data'] = {'username': username, 'email' : email, 'phone' : phone, 
-			'address' : address, 'city' : city, 'password' : password, 'otp' : otp, 'created_at' : created_at
+			session['register_data'] = {
+			'username': username, 
+			'email' : email, 
+			'phone' : phone, 
+			'address' : address, 
+			'city' : city, 
+			'password' : password, 
+			'otp' : otp, 
+			'created_at' : created_at
 			}
 
 			print(f" OTP for Registration: {otp}")
@@ -181,10 +200,11 @@ def login():
 				flash("logged in successfully")
 				print("logged in successfully")
 
-				logged_in.send(app, user_data={
-					'username':username,
-					'user_id':user['user_id']
-					})
+				# logged_in.send(app, user_data={
+				# 	'username':username,
+				# 	'user_id':user['user_id']
+				# 	})
+				cur.close()
 				return redirect(url_for('dashboard'))
 			else:
 				flash('Incorrect username/email/password!!')
@@ -287,6 +307,19 @@ def dashboard():
 	if 'user_id' not in session:
 		return redirect(url_for('login'))
 
+	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+	cur.execute("""SELECT notification_id, message, notification_type, created_at FROM notification_table
+		WHERE user_id=%s AND is_read=FALSE ORDER BY created_at DESC""",(session['user_id'],))
+	notifications=cur.fetchall()
+
+	if notifications:
+		for noti in notifications:
+			flash(noti['message'],'info')
+
+		cur.execute("""UPDATE notification_table SET is_read=TRUE WHERE user_id=%s AND is_read=FALSE""",
+			(session['user_id'],))
+		mysql.connection.commit()
+
 	if 'name' in session:
 		cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 		cur.execute("""SELECT cr.request_id, cr.status, p.pet_id, p.category AS pet_category, u.user_id AS adopter_id,
@@ -297,11 +330,7 @@ def dashboard():
 		call_requests = cur.fetchall()
 		
 		cur.close()
-		return render_template(
-			"dashboard.html",
-			username=session.get("name"),
-			call_requests=call_requests
-		)
+		return render_template("dashboard.html",username=session.get("name"),call_requests=call_requests)
 
 
 UPLOAD_FOLDER = os.path.join('static','uploads') 
@@ -422,12 +451,31 @@ def create_call_request(pet_id):
 	if 'user_id' not in session:
 		return redirect(url_for('login'))
 		
-	cur = mysql.connection.cursor()
+	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+	cur.execute("""SELECT p.name as pet_name, p.category, p.user_id as donor_id, u.name as donor_name 
+		FROM pet_table p JOIN user_table u on p.user_id=u.user_id WHERE p.pet_id=%s""",(pet_id,))
+	pet_info = cur.fetchone()
+
+	cur.execute("""SELECT name FROM user_table WHERE user_id = %s""",(session['user_id'],))
+	adopter_info = cur.fetchone()
 
 	cur.execute('INSERT INTO call_request_table(pet_id,user_id,status) VALUES (%s,%s,%s)',
-			 (pet_id, session['user_id'],'pending'	))
+			 (pet_id, session['user_id'],'pending',))
 	mysql.connection.commit()
 	cur.close()
+
+	if pet_info and adopter_info:
+		call_request_created.send(app, request_data= {
+			'pet_id':pet_id,
+			'pet_name':pet_info['pet_name'],
+			'pet_category':pet_info['category'],
+			'donor_id':pet_info['donor_id'],
+			'adopter_id':session['user_id'],
+			'adopter_name':session['name']
+			})
+		flash('Adoption request send successfully!','success')
+
 	return redirect(url_for('adopt'))
 
 @app.route('/cancel_request/<int:pet_id>',methods=['POST'])
@@ -435,11 +483,28 @@ def cancel_request(pet_id):
 	if 'user_id' not in session:
 		return redirect(url_for('login'))
 
-	cur = mysql.connection.cursor()
+	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+	cur.execute("""SELECT p.name as pet_name, p.category, p.user_id as donor_id FROM pet_table p
+		WHERE p.pet_id=%s""",(pet_id,))
+	pet_info = cur.fetchone()
+
+	cur.execute("""SELECT name FROM user_table WHERE user_id = %s""",(session['user_id'],))
+	adopter_info = cur.fetchone()
 
 	cur.execute("DELETE FROM call_request_table WHERE pet_id = %s AND user_id = %s",(pet_id,session['user_id']))
 	mysql.connection.commit()
 	cur.close()
+
+	if pet_info and adopter_info:
+		call_request_cancelled.send(app, cancel_data={
+			'pet_id':pet_id,
+			'pet_name':pet_info['pet_name'],
+			'pet_category':pet_info['category'],
+			'donor_id':pet_info['donor_id'],
+			'adopter_id':session['user_id'],
+			'adopter_name':adopter_info['name']
+			})
 
 	flash("Adoption request cancelled !","info")
 	return redirect(url_for('adopt'))
@@ -452,13 +517,37 @@ def decide_call_request(request_id):
 
 	decision = request.form.get('decision')
 
-	cur = mysql.connection.cursor()
+	cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+	cur.execute("""SELECT cr.user_id as adopter_id, p.name as pet_name, p.category, u.name as adopter_name
+		FROM call_request_table cr JOIN pet_table p ON cr.pet_id = p.pet_id JOIN user_table u ON 
+		cr.user_id = u.user_id WHERE cr.request_id=%s""",(request_id,))
+	request_info = cur.fetchone()
 	
 	cur.execute("UPDATE call_request_table SET status=%s WHERE request_id=%s",(decision,request_id))
 	
 	mysql.connection.commit()
-	
 	cur.close()
+
+	if request_info:
+		if decision == 'accepted':
+			call_request_accepted.send(app, acceptance_data={
+				'request_id':request_id,
+				'adopter_id':request_info['adopter_id'],
+				'adopter_name':request_info['adopter_name'],
+				'pet_name':request_info['pet_name'],
+				'pet_category':request_info['category']
+				})
+		elif decision == 'rejected':
+			call_request_rejected.send(app, rejected_data={
+				'request_id':request_id,
+				'adopter_id':request_info['adopter_id'],
+				'adopter_name':request_info['adopter_name'],
+				'pet_name':request_info['pet_name'],
+				'pet_category':request_info['category']
+				})
+	flash(f"Request {decision} successfully!","success")
+
 	return redirect(url_for('dashboard'))
 
 @app.route('/transaction_complete/<int:request_id>',methods=['POST'])
@@ -661,21 +750,61 @@ def adopter_profile(adopterid):
 	return render_template('other_person_profile.html',username=user_data['name'],city=user_data['city'],donated_pets=donated_pets,adopted_pets=adopted_pets)
 
 
-@registered.connect_via(app)
-def after_registered(sender, user_data, **extra):
-	print(f"user registered: {user_data['username']} at {user_data['created_at']}")
+# @registered.connect_via(app)
+# def after_registered(sender, user_data, **extra):
+# 	print(f"user registered: {user_data['username']} at {user_data['created_at']}! successfully")
+# 	flash(f"user registered: {user_data['username']} at {user_data['created_at']}! successfully","success")	
 
-@logged_in.connect_via(app)
-def after_login(sender,user_data,**extra):
-	print(f"user logged in: {user_data['username']}, ID {user_data['user_id']}")
+@call_request_created.connect_via(app)
+def on_call_request_created(sender,request_data,**extra):
+	donor_id = request_data['donor_id']
+	adopter_name = request_data['adopter_name']
+	pet_name = request_data['pet_name']
+	pet_category = request_data['pet_category']
+
+	message = f"{adopter_name} wants to adopt your {pet_category} '{pet_name}'."
+	create_notification(donor_id, message, 'call_request_created')
+	print(f"Notification created: {message}")
+
+@call_request_cancelled.connect_via(app)
+def on_call_request_cancelled(sender,cancel_data,**extra):
+	donor_id = cancel_data['donor_id']
+	adopter_name = cancel_data['adopter_name']
+	pet_name = cancel_data['pet_name']
+
+	message = f"{adopter_name} cancelled their adoption request for '{pet_name}'"
+	create_notification(donor_id,message,'call_request_cancelled')
+	print(f"Notification created: {message}")
+
+@call_request_accepted.connect_via(app)
+def on_call_request_accepted(sender, acceptance_data, **extra):
+	adopter_id = acceptance_data['adopter_id']
+	pet_name = acceptance_data['pet_name']
+
+	message = f"your call request for pet adoption for '{pet_name}' has been accepted"
+	create_notification(adopter_id,message,'call_request_accepted')
+	print(f"Notification created: {message}")
+
+@call_request_rejected.connect_via(app)
+def on_call_request_rejected(sender,rejected_data,**extra):
+	adopter_id = rejected_data['adopter_id']
+	# pet_name = rejected_data['pet_name']
+	pet_category = rejected_data['pet_category']
+
+	message = f"your adoption call request for '{pet_category}' was declined"
+	create_notification(adopter_id,message,'call_request_rejected')
+	print(f"Notification created: {message}")
 
 @donate_pet.connect_via(app)
 def after_pet_listed(sender,pet_data,**extra):
 	print(f"listed pet: {pet_data['name']}, {pet_data['category']}")
+	flash(f"listed pet: {pet_data['name']}, {pet_data['category']}","success")
 
 @pet_donated_completely.connect_via(app)
 def after_pet_donated(sender,transaction_data,**extra):
-	print(f"pet transaction completed for request {transaction_data['request_id']} ")
+	print(f"pet transaction completed for request {transaction_data['request_id']}")
+	flash(f"pet transaction completed for request {transaction_data['request_id']}","success")
+
 
 if __name__ == "__main__":
 	app.run()
