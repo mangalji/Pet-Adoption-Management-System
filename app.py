@@ -11,7 +11,8 @@ import uuid
 from werkzeug.security import generate_password_hash,check_password_hash
 from werkzeug.exceptions import RequestEntityTooLarge
 from blinker import Namespace
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, join_room, leave_room
+
 
 my_signals = Namespace()
 
@@ -31,7 +32,7 @@ def generate_otp():
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
-# socketio = SocketIO(app)
+socketio = SocketIO(app,cors_allowed_origins='*')
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'RajMangal'
@@ -40,7 +41,7 @@ app.config['MYSQL_DB'] = 'pet_adoption_system_database'
 
 mysql = MySQL(app)
 
-inactivity_time_in_seconds = 200 
+inactivity_time_in_seconds = 600 
 
 def create_notification(user_id, message, notification_type):
 	cur = mysql.connection.cursor()
@@ -48,6 +49,24 @@ def create_notification(user_id, message, notification_type):
 		VALUES (%s,%s,%s,FALSE,NOW())""",(user_id,message,notification_type))
 	mysql.connection.commit()
 	cur.close()
+
+	# socketio.emit('new_notification',{
+	# 	'user_id':user_id,
+	# 	'message':message,
+	# 	'type':notification_type
+	# 	}, to=str(user_id))
+	# print(f"sent realtime noti to user {user_id}")
+
+# @socketio.on('connect')
+# def on_connect():
+# 	if 'user_id' in session:
+# 		join_room(str(session['user_id']))
+# 		print(f"User {session['user_id']} joined their room.")
+
+# @socketio.on('disconnect')
+# def on_disconnect():
+# 	if 'user_id' in session:
+# 		leave_room(str(session))
 
 @app.route("/")
 def home():
@@ -749,6 +768,10 @@ def adopter_profile(adopterid):
 
 	return render_template('other_person_profile.html',username=user_data['name'],city=user_data['city'],donated_pets=donated_pets,adopted_pets=adopted_pets)
 
+# @app.route('/test_emit')
+# def test_emit():
+#     socketio.emit('new_notification', {'message': 'Test Notification'}, to='1')
+#     return "Notification sent!"
 
 # @registered.connect_via(app)
 # def after_registered(sender, user_data, **extra):
@@ -762,7 +785,7 @@ def on_call_request_created(sender,request_data,**extra):
 	pet_name = request_data['pet_name']
 	pet_category = request_data['pet_category']
 
-	message = f"{adopter_name} wants to adopt your {pet_category} '{pet_name}'."
+	message = f"{adopter_name} wants to adopt your {pet_category}, '{pet_name}'."
 	create_notification(donor_id, message, 'call_request_created')
 	print(f"Notification created: {message}")
 
@@ -805,7 +828,19 @@ def after_pet_donated(sender,transaction_data,**extra):
 	print(f"pet transaction completed for request {transaction_data['request_id']}")
 	flash(f"pet transaction completed for request {transaction_data['request_id']}","success")
 
+# @socketio.on("connect")
+# def handle_connect(auth):
+#     print(f"Client connected: {request.sid}")
+#     socketio.emit("new_notification", {"message": "Connected OK"},to=request.sid)
+
+# @socketio.on('join_room')
+# def handle_join(data):
+# 	user_id = str(data.get('user_id'))
+# 	join_room(user_id)
+# 	print(f"user {user_id} joined room {user_id}")
+
 
 if __name__ == "__main__":
-	app.run()
+	app.run(debug=True)
+	# socketio.run(app,debug=True)
 
