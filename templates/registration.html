@@ -4,54 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register</title>
-  <link rel="stylesheet" href="{{url_for('static',filename='styles/style.css')}}">
+  <link rel="stylesheet" href="{{url_for('static',filename='styles/auth_style.css')}}">
   <style> 
-    *{
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
-}
-body {
-  background-color: #fafafa;
-  font-family: 'Poppins', sans-serif;
-  color: #333;
-  min-height: 220vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: url("https://images.unsplash.com/photo-1517849845537-4d257902454a") no-repeat center center;
-  background-size: cover;
-  background-attachment: scroll;
-}
-header {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  text-align: center;
-  padding: 20px 0;
-  background: purple;
-  /*background: rgba(0, 0, 0, 0.5);*/
-  color: white;
-  font-size: 26px;
-  font-weight: bold;
-  letter-spacing: 1px;
-  z-index: 10;
-}
 .container {
-  position: fixed;
-  top: 55%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.9);
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
   width: 380px;
   max-height: 500px;       /* container ki height limit */
   overflow-y: auto;        /* agar fields zyada ho to andar scroll ho */
-  text-align: center;
-  z-index: 5;
 }
 /* Scrollbar ko hide karna */
 .container::-webkit-scrollbar {
@@ -61,37 +19,8 @@ header {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;     /* Firefox */
 }
-.container h2 {
-  margin-bottom: 20px;
-  font-size: 22px;
-  color: #333;
-}
-.input-field {
-  margin-bottom: 15px;
-  text-align: left;
-}
-.input-field label {
-  display: block;
-  font-size: 14px;
-  margin-bottom: 5px;
-  color: #444;
-}
-.input-field input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  outline: none;
-  font-size: 14px;
-}
 .btn {
   width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.3s;
   margin-top: 15px;
   background: #2196F3;
   color: white;
