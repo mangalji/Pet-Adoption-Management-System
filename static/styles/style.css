@@ -138,17 +138,6 @@ body {
   margin-bottom: 2rem;
   border: none;
 }
-
-.pet-status {
-  position: absolute;
-  bottom: 40px;
-  right: 55px;
-  background: rgba(0,0,0,0.6);
-  color: white;
-  padding: 2px 8px;
-  font-size: 0.8rem;
-  border-radius: 8px;
-}
 .center-buttons {
   display: flex;
   flex-direction: column;
