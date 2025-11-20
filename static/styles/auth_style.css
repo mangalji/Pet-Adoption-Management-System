@@ -157,8 +157,14 @@ margin-bottom: 15px;
   border: 1px solid #f5c6cb;
 }
 /* Navbar */
+
+.navbar, .hero-content, section, footer {
+  position: relative;
+  z-index: 1;
+}
+
 .navbar {
-  background: #6a0dad;
+  background: rgba(106, 13, 173, 0.9);
 }
 .navbar-brand, .nav-link {
   color: #fff !important;
@@ -217,7 +223,7 @@ margin-bottom: 15px;
 
 /* Footer */
 footer {
-  background: #6a0dad;
+  background: rgba(106, 13, 173, 0.9);
   color: white;
   padding: 20px 0;
   text-align: center;
