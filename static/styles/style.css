@@ -122,6 +122,11 @@ body {
 .pet-card-body {
   padding: 1.5rem;
 }
+.pet-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
 .pet-card {
   position: relative;
   cursor: pointer;
@@ -134,10 +139,6 @@ body {
   border: none;
 }
 
-.pet-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-}
 .pet-status {
   position: absolute;
   bottom: 40px;
