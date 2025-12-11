@@ -784,7 +784,6 @@ def on_call_request_created(sender,request_data,**extra):
 	adopter_name = request_data['adopter_name']
 	pet_name = request_data['pet_name']
 	pet_category = request_data['pet_category']
-
 	message = f"{adopter_name} wants to adopt your {pet_category}, '{pet_name}'."
 	create_notification(donor_id, message, 'call_request_created')
 	print(f"Notification created: {message}")
@@ -794,7 +793,6 @@ def on_call_request_cancelled(sender,cancel_data,**extra):
 	donor_id = cancel_data['donor_id']
 	adopter_name = cancel_data['adopter_name']
 	pet_name = cancel_data['pet_name']
-
 	message = f"{adopter_name} cancelled their adoption request for '{pet_name}'"
 	create_notification(donor_id,message,'call_request_cancelled')
 	print(f"Notification created: {message}")
@@ -803,7 +801,6 @@ def on_call_request_cancelled(sender,cancel_data,**extra):
 def on_call_request_accepted(sender, acceptance_data, **extra):
 	adopter_id = acceptance_data['adopter_id']
 	pet_name = acceptance_data['pet_name']
-
 	message = f"your call request for pet adoption for '{pet_name}' has been accepted"
 	create_notification(adopter_id,message,'call_request_accepted')
 	print(f"Notification created: {message}")
@@ -813,7 +810,6 @@ def on_call_request_rejected(sender,rejected_data,**extra):
 	adopter_id = rejected_data['adopter_id']
 	# pet_name = rejected_data['pet_name']
 	pet_category = rejected_data['pet_category']
-
 	message = f"your adoption call request for '{pet_category}' was declined"
 	create_notification(adopter_id,message,'call_request_rejected')
 	print(f"Notification created: {message}")
