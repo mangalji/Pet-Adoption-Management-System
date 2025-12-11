@@ -13,9 +13,10 @@ from werkzeug.exceptions import RequestEntityTooLarge
 from blinker import Namespace
 from flask_socketio import SocketIO, emit, join_room, leave_room
 
-
+# now we call the namespace class from python signals for flask application
 my_signals = Namespace()
 
+# now we create the signal messages
 registered = my_signals.signal('user created successfully')
 logged_in = my_signals.signal('user logged in successfully')
 donate_pet = my_signals.signal('pet listed successfully')
