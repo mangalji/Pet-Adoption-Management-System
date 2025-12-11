@@ -56,12 +56,15 @@ mysql = MySQL(app)
 # this variable for taking the total no. of seconds which we used for inactice the session
 inactivity_time_in_seconds = 600 
 
+# this function is for create the notification which we will show after getting the signals in website
 def create_notification(user_id, message, notification_type):
 	cur = mysql.connection.cursor()
 	cur.execute("""INSERT INTO notification_table(user_id,message,notification_type, is_read, created_at) 
 		VALUES (%s,%s,%s,FALSE,NOW())""",(user_id,message,notification_type))
 	mysql.connection.commit()
 	cur.close()
+	
+	# this is a implementation of sockets in flask, here we try to implement it in this project but it don't work so we commented it
 
 	# socketio.emit('new_notification',{
 	# 	'user_id':user_id,
@@ -81,6 +84,7 @@ def create_notification(user_id, message, notification_type):
 # 	if 'user_id' in session:
 # 		leave_room(str(session))
 
+# it's our home route where we redirect when we initialize the website means firstly we go to here then go another route
 @app.route("/")
 def home():
 	return render_template("index.html")
