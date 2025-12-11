@@ -53,6 +53,7 @@ app.config['MYSQL_DB'] = 'pet_adoption_system_database'
 # here we create the instance of database
 mysql = MySQL(app)
 
+# this variable for taking the total no. of seconds which we used for inactice the session
 inactivity_time_in_seconds = 600 
 
 def create_notification(user_id, message, notification_type):
