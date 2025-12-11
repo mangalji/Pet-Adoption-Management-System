@@ -50,6 +50,7 @@ app.config['MYSQL_USER'] = 'RajMangal'
 app.config['MYSQL_PASSWORD'] = 'raj12345'
 app.config['MYSQL_DB'] = 'pet_adoption_system_database'
 
+# here we create the instance of database
 mysql = MySQL(app)
 
 inactivity_time_in_seconds = 600 
