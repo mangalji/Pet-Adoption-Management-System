@@ -26,15 +26,25 @@ call_request_cancelled = my_signals.signal("call request cancelled")
 call_request_accepted = my_signals.signal("call request accepted")
 call_request_rejected = my_signals.signal("call request rejected")
 
+# we call the time module's feature datetime and store it in a var
 now = datetime.now()
 
+# this is a function for generate the random 6 digit otp code
 def generate_otp():
 	return str(random.randint(100000,999999))
 
+# here we call the flask app instance 
+# this is our main flask app which we get from the python's flask package
 app = Flask(__name__)
+
+# this is the secret key for sessions
 app.secret_key = "supersecretkey"
+
+# this socketIO is a websocket in flask for using sockets in our project
 socketio = SocketIO(app,cors_allowed_origins='*')
 
+# here we connect the database with our project
+# we use the flask_mysqldb as a database
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'RajMangal'
 app.config['MYSQL_PASSWORD'] = 'raj12345'
