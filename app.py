@@ -101,7 +101,11 @@ def registration():
 	address = ''
 	city = ''
 	password = ''
+
+	# here we check the user fill the form
 	if request.method == 'POST':
+
+		# here we check the user fill the otp or not
 		if 'generate_otp' in request.form:
 			username = request.form['username']
 			print('username: ',username)
