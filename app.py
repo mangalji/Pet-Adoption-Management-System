@@ -107,6 +107,8 @@ def registration():
 
 		# here we check the user fill the otp or not
 		if 'generate_otp' in request.form:
+
+			# here we extract the details of user if he entered
 			username = request.form['username']
 			print('username: ',username)
 			email = request.form['email']
@@ -118,18 +120,24 @@ def registration():
 			print('password:',password)
 			created_at = datetime.now()
 
+			# here we check the details by implementing regex
+
+			# here we check all fields are completely filled or not  
 			if not all([username, email, phone, address, city, password]):
 				flash("Please fill all field before generating OTP.", "danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
+			# here we check the validation of username
 			if ( not re.match(r'^(?!\d)(?!.*(.)\1\1)(?!.*__)(?!.*_$)(?!^_)(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9_]{5,10}$', username)):
 				flash("Invalid! Username must be 5-10 characters in alphanumeric form and also in valid form", "danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
+			# here we check the validation of email address
 			if not re.match(r'^[a-zA-Z][a-zA-Z0-9._-]{0,17}@[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}$', email):
 				flash("Invalid! email address", "danger")
 				return render_template('registration.html', username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
+			# here we check the phone number is valid or not
 			if not re.match(r'^(?!.*(\d)\1{9})(?![6-9]0{9})[6-9]\d{9}$', phone):
 				flash("Invalid! phone no, Please enter valid phone number","danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
