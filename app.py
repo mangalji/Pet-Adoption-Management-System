@@ -92,6 +92,7 @@ def home():
 # def notify_user(user_id,message):
 # 	socketio.emit('notification', {'msg':message}, room=str(user_id))
 
+# this route is for my registration page 
 @app.route('/registration', methods=['GET','POST'])
 def registration():
 	username = ''
