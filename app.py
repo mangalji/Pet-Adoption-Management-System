@@ -142,23 +142,31 @@ def registration():
 				flash("Invalid! phone no, Please enter valid phone number","danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
+			# here we check the validation of password
 			if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,12}$",password):
 				flash("Invalid! password must be 6-12 digit long, contain atleast 1 letter, 1 number and 1 special character","danger")
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city)
 
+			# here we implement the validation on the address
 			if not re.match(r"^[A-Za-z0-9\s.,#'-]{10,50}$", address):
 				flash("Invalid! address. Use 10–50 characters with letters, numbers, commas, periods, or hyphens only.", "danger")
 				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 			
+			# here we check the valid city name 
 			if not re.match(r"^[A-Za-z\s-]{3,15}$", city):
 				flash("Invalid! city name. Only letters, spaces, and hyphens are allowed (3–15 characters).", "danger")
 				return render_template('registration.html', username=username, email=email, phone=phone, address=address, city=city, password=password)
 
+			# here we call the cursor for database queries
+			# this below parameter 'MySQLdb.cursors.DictCursor' in cursor tells that store the values in dict form
 			cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+			# this is our query to fetch the user
 			cur.execute("SELECT * FROM user_table WHERE name=%s OR email=%s", (username,email))
 			existing_user = cur.fetchone()
 			cur.close()
-		
+			
+			# here we check that ,user existed or not, if existed we say you already registered, if not go ahead
 			if existing_user:
 				if existing_user['name'] == username:
 					flash("Invalid! Account with this username already exists","danger")
@@ -166,7 +174,7 @@ def registration():
 					flash("Invalid! Email id is already in use with another account","danger")
 				return render_template('registration.html',username=username, email=email, phone=phone, address=address, city=city, password=password) 
 
-
+			# here we sent the otp on the terminal.
 			otp = generate_otp()
 			session['register_data'] = {
 			'username': username, 
