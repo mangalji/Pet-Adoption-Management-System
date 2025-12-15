@@ -896,7 +896,7 @@ def after_pet_donated(sender,transaction_data,**extra):
 # 	join_room(user_id)
 # 	print(f"user {user_id} joined room {user_id}")
 
-
+# this is our main function of the project
 if __name__ == "__main__":
 	app.run(debug=True)
 	# socketio.run(app,debug=True)
