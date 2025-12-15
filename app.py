@@ -240,12 +240,15 @@ def registration():
 	# here we render the registration page for register the user.
 	return render_template("registration.html")
 
-
+# this route is for login for users 
 @app.route("/login", methods=['GET', 'POST'])
 def login():	
 	# print("request form: ",request.form)
+
+	# if user filled data in the fields and click on the login button, this condition will true.
 	if request.method == 'POST':
 		try:
+			# here we extract the data from the fields
 			username = request.form['username']
 			email = request.form['email']
 			password = request.form['password']
@@ -253,16 +256,22 @@ def login():
 			print("email: ",email)
 			print("password: ",password)
 			cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+			# here we fetch the data from the users table 
 			cur.execute('SELECT * FROM user_table WHERE name = %s AND email = %s',(username,email))
 			user = cur.fetchone()
 
+			# if user available in users table , then we check the password
 			if user and check_password_hash(user['password'],password):
+
+				# here we assign the session id for the user for update the active session time
 				new_session_id = str(uuid.uuid4())
 
 				cur.execute("update user_table set active_session = %s, last_active = NOW() where user_id = %s",
 							(new_session_id, user['user_id']))
 				mysql.connection.commit()
 
+				#if user validated successfully we create a temporary session storage for the user 
 				session['loggedin'] = True
 				session['user_id'] = user['user_id']
 				session['name'] = user['name']
