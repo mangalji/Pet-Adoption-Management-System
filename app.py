@@ -191,6 +191,7 @@ def registration():
 			flash("OTP sent successfully on terminal","info")
 			return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 
+		# here if the otp is entered and click on the registered button, get all the data and store it in a session storage for temp..
 		elif request.form.get('otp'):
 			entered_otp = request.form['otp']
 			data_stored_in_session = session.get('register_data')
@@ -204,21 +205,31 @@ def registration():
 				password = data_stored_in_session.get('password')
 				created_at = data_stored_in_session.get('created_at')
 
+				# now here we again initialize the cursor.
 				cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+				#this is for save the password in hash form for encrypt it 
 				hashed_password = generate_password_hash(password)
+
+				# this query for insert the data in the table of users
 				cur.execute("INSERT INTO user_table(name,phone,email,password,address,city,created_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
         		      (username,phone,email,hashed_password,address,city,created_at))
 				mysql.connection.commit()
 				cur.close()
 
+				# here we send the notification (signals) to the frontend
 				registered.send(app, user_data={
 					'username':username,
 					'email':email,
 					'created_at':created_at
 					})
-
+				# here we clear the session 
 				session.pop('register_data',None)
+
+				# it's a flash message
 				flash("Registration Successful! Please login.", "success")
+			
+				# here we redirect the user to the login route
 				return redirect(url_for('login'))
 			
 			else:
