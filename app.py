@@ -234,7 +234,10 @@ def registration():
 			
 			else:
 				flash("Invalid OTP","danger")
+
+				# if the entered otp is invalid, it rendered the current page
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
+	# here we render the registration page for register the user.
 	return render_template("registration.html")
 
 
