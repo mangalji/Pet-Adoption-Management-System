@@ -105,7 +105,7 @@ def registration():
 	# here we check the user fill the form
 	if request.method == 'POST':
 
-		# here we check the user fill the otp or not
+		# here we check the otp field exist or not
 		if 'generate_otp' in request.form:
 
 			# here we extract the details of user if he entered
@@ -349,7 +349,7 @@ def logout():
 	return response
 	# return'<script>window.history.forward()</script>'
 
-
+# this route is for logging out the user session
 @app.route('/forgot_pass',methods=["POST","GET"])
 def forgot_password():
 	if request.method == 'POST':
