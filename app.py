@@ -11,7 +11,10 @@ import uuid
 from werkzeug.security import generate_password_hash,check_password_hash
 from werkzeug.exceptions import RequestEntityTooLarge
 from blinker import Namespace
-from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_socketio import SocketIO
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # now we call the namespace class from python signals for flask application
 my_signals = Namespace()
@@ -38,17 +41,18 @@ def generate_otp():
 app = Flask(__name__)
 
 # this is the secret key for sessions
-app.secret_key = "supersecretkey"
+app.secret_key = os.environ.get("SECRET_KEY")
+
 
 # this socketIO is a websocket in flask for using sockets in our project
 socketio = SocketIO(app,cors_allowed_origins='*')
 
 # here we connect the database with our project
 # we use the flask_mysqldb as a database
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'RajMangal'
-app.config['MYSQL_PASSWORD'] = 'raj12345'
-app.config['MYSQL_DB'] = 'pet_adoption_system_database'
+app.config['MYSQL_HOST'] = os.environ.get("HOST")
+app.config['MYSQL_USER'] = os.environ.get("USER")
+app.config['MYSQL_PASSWORD'] = os.environ.get("PASSWORD")
+app.config['MYSQL_DB'] = os.environ.get("DB")
 
 # here we create the instance of database
 mysql = MySQL(app)
@@ -526,6 +530,8 @@ def adopt():
 
 	return render_template('adopt.html',username = session.get('name'), city=session.get("city"), pets=pets, page=page, total_pages=total_pages, total_pets=total_pets)
 
+
+# this route is for creating the call request for the pet owner
 @app.route('/create_call_request/<int:pet_id>',methods=['POST'])
 def create_call_request(pet_id):
 	if 'user_id' not in session:
