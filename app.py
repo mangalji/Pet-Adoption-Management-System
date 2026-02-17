@@ -802,10 +802,12 @@ def delete_pet(pet_id):
 	flash("pet deleted successfully","success")
 	return redirect(url_for('profile'))
 
+#this route is for support page
 @app.route('/support')
 def support():
 	return render_template("customer_support.html",username=session.get('name'),city=session.get('city'))
 
+#this route is for adopter's profile page
 @app.route('/adopter_profile/<int:adopterid>')
 def adopter_profile(adopterid):
 
@@ -845,6 +847,7 @@ def adopter_profile(adopterid):
 # 	print(f"user registered: {user_data['username']} at {user_data['created_at']}! successfully")
 # 	flash(f"user registered: {user_data['username']} at {user_data['created_at']}! successfully","success")	
 
+# this is a signal for creating the call request 
 @call_request_created.connect_via(app)
 def on_call_request_created(sender,request_data,**extra):
 	donor_id = request_data['donor_id']
@@ -855,6 +858,7 @@ def on_call_request_created(sender,request_data,**extra):
 	create_notification(donor_id, message, 'call_request_created')
 	print(f"Notification created: {message}")
 
+# this decorator is for sending the signal for request cancle
 @call_request_cancelled.connect_via(app)
 def on_call_request_cancelled(sender,cancel_data,**extra):
 	donor_id = cancel_data['donor_id']
@@ -864,6 +868,8 @@ def on_call_request_cancelled(sender,cancel_data,**extra):
 	create_notification(donor_id,message,'call_request_cancelled')
 	print(f"Notification created: {message}")
 
+
+# this signal is for sending the notification of accepting the request
 @call_request_accepted.connect_via(app)
 def on_call_request_accepted(sender, acceptance_data, **extra):
 	adopter_id = acceptance_data['adopter_id']
@@ -872,6 +878,8 @@ def on_call_request_accepted(sender, acceptance_data, **extra):
 	create_notification(adopter_id,message,'call_request_accepted')
 	print(f"Notification created: {message}")
 
+
+# this signal is for sending the notification of rejection of the call request of adopter by donater
 @call_request_rejected.connect_via(app)
 def on_call_request_rejected(sender,rejected_data,**extra):
 	adopter_id = rejected_data['adopter_id']
