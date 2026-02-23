@@ -1,5 +1,5 @@
 .env
-*__pycache__*
+*/__pycache__*
 id_pass_for_petproject.txt
 sql.txt
 /static/uploads
