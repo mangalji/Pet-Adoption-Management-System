@@ -2,3 +2,5 @@
 *__pycache__*
 id_pass_for_petproject.txt
 sql.txt
+/static/uploads
+/static/images
