@@ -1,9 +1,9 @@
-# Pet Wallah – Pet Adoption System
+# Pet Wala – Pet Adoption System
 <!-- This is my Pet Adoption project repository -->
 
 ## Description:
 
-Pet wallah is a web based application where users can list his pets for donate and adopt the pets which are listed by another user. And it's absolutely complete free plateform.
+Pet wala is a web based application where users can list his pets for donate and adopt the pets which are listed by another user. And it's absolutely complete free plateform.
 
 ---
 
