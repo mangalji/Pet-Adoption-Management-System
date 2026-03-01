@@ -11,7 +11,7 @@ import uuid
 from werkzeug.security import generate_password_hash,check_password_hash
 from werkzeug.exceptions import RequestEntityTooLarge
 from blinker import Namespace
-from flask_socketio import SocketIO
+# from flask_socketio import SocketIO
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -45,7 +45,7 @@ app.secret_key = os.environ.get("SECRET_KEY")
 
 
 # this socketIO is a websocket in flask for using sockets in our project
-socketio = SocketIO(app,cors_allowed_origins='*')
+# socketio = SocketIO(app,cors_allowed_origins='*')
 
 # here we connect the database with our project
 # we use the flask_mysqldb as a database
@@ -68,26 +68,6 @@ def create_notification(user_id, message, notification_type):
 	mysql.connection.commit()
 	cur.close()
 	
-	# this is a implementation of sockets in flask, here we try to implement it in this project but it don't work so we commented it
-
-	# socketio.emit('new_notification',{
-	# 	'user_id':user_id,
-	# 	'message':message,
-	# 	'type':notification_type
-	# 	}, to=str(user_id))
-	# print(f"sent realtime noti to user {user_id}")
-
-# @socketio.on('connect')
-# def on_connect():
-# 	if 'user_id' in session:
-# 		join_room(str(session['user_id']))
-# 		print(f"User {session['user_id']} joined their room.")
-
-# @socketio.on('disconnect')
-# def on_disconnect():
-# 	if 'user_id' in session:
-# 		leave_room(str(session))
-
 # it's our home route where we redirect when we initialize the website means firstly we go to here then go another route
 @app.route("/")
 def home():
@@ -176,7 +156,13 @@ def registration():
 					flash("Invalid! Account with this username already exists","danger")
 				elif existing_user['email'] == email:
 					flash("Invalid! Email id is already in use with another account","danger")
-				return render_template('registration.html',username=username, email=email, phone=phone, address=address, city=city, password=password) 
+				return render_template('registration.html',
+						   username=username, 
+						   email=email, 
+						   phone=phone, 
+						   address=address, 
+						   city=city, 
+						   password=password) 
 
 			# here we sent the otp on the terminal.
 			otp = generate_otp()
@@ -216,8 +202,11 @@ def registration():
 				hashed_password = generate_password_hash(password)
 
 				# this query for insert the data in the table of users
-				cur.execute("INSERT INTO user_table(name,phone,email,password,address,city,created_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
-        		      (username,phone,email,hashed_password,address,city,created_at))
+				cur.execute("""INSERT INTO 
+				user_table(name,phone,email,password,address,city,created_at) 
+				VALUES (%s,%s,%s,%s,%s,%s,%s)""",
+        		(username,phone,email,hashed_password,address,city,created_at))
+
 				mysql.connection.commit()
 				cur.close()
 
@@ -240,7 +229,13 @@ def registration():
 				flash("Invalid OTP","danger")
 
 				# if the entered otp is invalid, it rendered the current page
-				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
+				return render_template('registration.html',
+						   username=username,
+						   email=email,
+						   phone=phone,
+						   address=address,
+						   city=city,
+						   password=password)
 	# here we render the registration page for register the user.
 	return render_template("registration.html")
 
@@ -284,10 +279,6 @@ def login():
 				flash("logged in successfully")
 				print("logged in successfully")
 
-				# logged_in.send(app, user_data={
-				# 	'username':username,
-				# 	'user_id':user['user_id']
-				# 	})
 				cur.close()
 				return redirect(url_for('dashboard'))
 			else:
@@ -296,7 +287,7 @@ def login():
 			print("Error: ",str(e))
 	return render_template("login_page.html")
 
-
+# this is our session management code, here we handle the sessions
 @app.before_request
 def enforce_single_session():
 	if 'loggedin' in session and session.get('user_id'):
@@ -334,7 +325,7 @@ def enforce_session_inactivity_timeout():
 		mysql.connection.commit()
 		cur.close()
 
-
+# this is our logout method
 @app.route('/logout')
 def logout():
 
@@ -715,11 +706,6 @@ def edit_profile():
 			flash("Username must be 5-10 characters in alphanumeric form and also in valid form", "danger")
 			return render_template('edit_profile.html',username=username,phone=phone,address=address,city=city,user=user)
 		
-		# email_regex = r"^(?!.*\.\.)(?!.*\.$)[a-zA-Z0-9._%+-]{3,15}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-		# if (not re.match(email_regex,email) or email.count('@') !=1 or email.startswith('@') or len(email.split('@')[0]) > 15) :
-		# 	flash("Invalid email address", "danger")
-		# 	return render_template('edit_profile.html', username=username,email=email,phone=phone,address=address,city=city,user=user)
-		
 		if not re.match(r'^(?!.*(\d)\1{9})(?![6-9]0{9})[6-9]\d{9}$', phone):
 			flash("Invalid phone no, Please enter valid phone number","danger")
 			return render_template('edit_profile.html',username=username,phone=phone,address=address,city=city,user=user)
@@ -751,7 +737,6 @@ def edit_profile():
 		cur.close()
 
 		session['name'] = username
-		# session['email'] = email
 		session['phone'] = phone
 		session['address'] = address
 		session['city'] = city
@@ -836,11 +821,6 @@ def adopter_profile(adopterid):
 	cur.close()
 
 	return render_template('other_person_profile.html',username=user_data['name'],city=user_data['city'],donated_pets=donated_pets,adopted_pets=adopted_pets)
-
-# @app.route('/test_emit')
-# def test_emit():
-#     socketio.emit('new_notification', {'message': 'Test Notification'}, to='1')
-#     return "Notification sent!"
 
 # @registered.connect_via(app)
 # def after_registered(sender, user_data, **extra):
