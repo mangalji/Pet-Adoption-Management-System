@@ -889,29 +889,22 @@ def on_call_request_rejected(sender,rejected_data,**extra):
 	create_notification(adopter_id,message,'call_request_rejected')
 	print(f"Notification created: {message}")
 
+# this function send notification after pet is listed
 @donate_pet.connect_via(app)
 def after_pet_listed(sender,pet_data,**extra):
 	print(f"listed pet: {pet_data['name']}, {pet_data['category']}")
 	flash(f"listed pet: {pet_data['name']}, {pet_data['category']}","success")
 
+# this function send notification of pet transaction completed after pet is successfully donated
 @pet_donated_completely.connect_via(app)
 def after_pet_donated(sender,transaction_data,**extra):
 	print(f"pet transaction completed for request {transaction_data['request_id']}")
 	flash(f"pet transaction completed for request {transaction_data['request_id']}","success")
 
-# @socketio.on("connect")
-# def handle_connect(auth):
-#     print(f"Client connected: {request.sid}")
-#     socketio.emit("new_notification", {"message": "Connected OK"},to=request.sid)
-
-# @socketio.on('join_room')
-# def handle_join(data):
-# 	user_id = str(data.get('user_id'))
-# 	join_room(user_id)
-# 	print(f"user {user_id} joined room {user_id}")
 
 # this is our main function of the project
 if __name__ == "__main__":
+
 	app.run(debug=True)
-	# socketio.run(app,debug=True)
+
 
