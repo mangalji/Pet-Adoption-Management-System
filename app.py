@@ -429,7 +429,7 @@ def dashboard():
 		cur.close()
 		return render_template("dashboard.html",username=session.get("name"),call_requests=call_requests)
 
-
+# now our file upload code comes, here we used to upload the Pet's image
 UPLOAD_FOLDER = os.path.join('static','uploads') 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
@@ -437,15 +437,15 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'png','jpg','jpeg'}
 
 def allowed_file(filename):
-	return '.' in filename and \
-		filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
+	return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 
+# this is error handler to handle the large file size issue
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_too_large(e):
     flash("File is too large. Max size allowed is 2 MB.", "danger")
     return redirect(url_for('donate'))
 
-
+# this is out one of the main route, this is used to list the pet for donation
 @app.route('/donate', methods=['GET', 'POST'])
 def donate():
 	if 'user_id' not in session:
@@ -512,6 +512,7 @@ def donate():
 
 	return render_template("donate.html",username=session.get("name"))
 
+# this is also one of the main route, this route have the funcitoning of adoption of pets.
 @app.route('/adopt')
 def adopt():
 
@@ -535,7 +536,7 @@ def adopt():
 	cur.execute("""SELECT p.*, u.name AS donor_name,(SELECT cr.status FROM call_request_table cr  
 		WHERE cr.pet_id = p.pet_id AND cr.user_id = %s  ORDER BY cr.request_id DESC LIMIT 1) AS request_status 
 		FROM pet_table p JOIN user_table u ON u.user_id = p.user_id WHERE p.user_id != %s AND p.pet_id 
-		NOT IN (    SELECT pet_id FROM transaction_table WHERE status = 'completed')
+		NOT IN (SELECT pet_id FROM transaction_table WHERE status = 'completed')
         LIMIT %s OFFSET %s""", (session['user_id'], session['user_id'], per_page, offset))	
 	
 	pets = cur.fetchall()
