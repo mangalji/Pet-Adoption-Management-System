@@ -11,6 +11,7 @@ import uuid
 from werkzeug.security import generate_password_hash,check_password_hash
 from werkzeug.exceptions import RequestEntityTooLarge
 from blinker import Namespace
+from flask_mail import Mail, Message
 # from flask_socketio import SocketIO
 from dotenv import load_dotenv
 
@@ -54,6 +55,13 @@ app.config['MYSQL_USER'] = os.environ.get("USER")
 app.config['MYSQL_PASSWORD'] = os.environ.get("PASSWORD")
 app.config['MYSQL_DB'] = os.environ.get("DB")
 
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+
+mail = Mail(app)
 # here we create the instance of database
 mysql = MySQL(app)
 
@@ -67,6 +75,15 @@ def create_notification(user_id, message, notification_type):
 		VALUES (%s,%s,%s,FALSE,NOW())""",(user_id,message,notification_type))
 	mysql.connection.commit()
 	cur.close()
+
+def send_otp(to_email,otp):
+	msg = Message(
+		subject = "Your OTP for register",
+		sender = os.getenv("MAIL_USERNAME"),
+		recipients = [to_email]
+	)
+	msg.body = f"Your OTP for registration at petwala is {otp}\n\nThis OTP is valid for 5 min. Do not share it with anyone."
+	mail.send(msg)
 	
 # it's our home route where we redirect when we initialize the website means firstly we go to here then go another route
 @app.route("/")
@@ -117,7 +134,7 @@ def registration():
 				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
 			# here we check the validation of email address
-			if not re.match(r'^[a-zA-Z][a-zA-Z0-9._-]{0,17}@[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}$', email):
+			if not re.match(r'^[a-zA-Z][a-zA-Z0-9._-]{0,37}@[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}$', email):
 				flash("Invalid! email address", "danger")
 				return render_template('registration.html', username=username,email=email,phone=phone,address=address,city=city,password=password)
 			
@@ -177,9 +194,16 @@ def registration():
 			'created_at' : created_at
 			}
 
-			print(f" OTP for Registration: {otp}")
-			flash("OTP sent successfully on terminal","info")
-			return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
+			# print(f" OTP for Registration: {otp}")
+			# flash("OTP sent successfully on terminal","info")
+			try:
+				send_otp(email,otp)
+				flash(f"OTP sent successfully to {email}", "info")
+				print(f'email: {email}, OTP: {otp}')
+			except Exception as e:
+				flash("Failed to send OTP. Please try again.", "danger")
+				print(f"Mail error: {e}")
+				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
 
 		# here if the otp is entered and click on the registered button, get all the data and store it in a session storage for temp..
 		elif request.form.get('otp'):
