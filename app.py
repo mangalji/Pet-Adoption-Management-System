@@ -90,18 +90,10 @@ def send_otp(to_email,otp):
 def home():
 	return render_template("index.html")
 
-# def notify_user(user_id,message):
-# 	socketio.emit('notification', {'msg':message}, room=str(user_id))
-
 # this route is for my registration page 
 @app.route('/registration', methods=['GET','POST'])
 def registration():
-	username = ''
-	email = ''
-	phone = ''
-	address = ''
-	city = ''
-	password = ''
+	username = email = phone = address = city = password = ''
 
 	# here we check the user fill the form
 	if request.method == 'POST':
@@ -203,7 +195,12 @@ def registration():
 			except Exception as e:
 				flash("Failed to send OTP. Please try again.", "danger")
 				print(f"Mail error: {e}")
-				return render_template('registration.html',username=username,email=email,phone=phone,address=address,city=city,password=password)
+				return render_template('registration.html',username=username,
+						   email=email,
+						   phone=phone,
+						   address=address,
+						   city=city,
+						   password=password)
 
 		# here if the otp is entered and click on the registered button, get all the data and store it in a session storage for temp..
 		elif request.form.get('otp'):
@@ -401,6 +398,7 @@ def forgot_password():
 
 	return render_template('forgot_password.html')
 
+# dashboard route
 @app.route("/dash")
 def dashboard():
 	if 'user_id' not in session:
