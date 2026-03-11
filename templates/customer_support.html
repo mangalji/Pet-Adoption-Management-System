@@ -1,136 +1,162 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Customer Support</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customer Support</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
 
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(175deg, skyblue, green);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
+    <style>
+      body {
+        margin: 0;
+        font-family: "Poppins", sans-serif;
+        background: linear-gradient(175deg, skyblue, green);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
 
-    nav.navbar {
-      margin-top: -100px;
-      width: 100%;
-      background: rgba(255,255,255,0.15);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      padding: 15px 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+      nav.navbar {
+        margin-top: -100px;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-    .navbar-logo {
-      margin-top: -1px;
-      margin-left: 51px;
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #fff;
-    }
+      .navbar-logo {
+        margin-top: -1px;
+        margin-left: 51px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #fff;
+      }
 
-    .navbar-items {
-      margin-right: 20px;
-      list-style: none;
-      display: flex;
-      gap: 20px;
-    }
+      .navbar-items {
+        margin-right: 20px;
+        list-style: none;
+        display: flex;
+        gap: 20px;
+      }
 
-    .navbar-item {
-      color: #fff;
-      text-decoration: none;
-      font-weight: 500;
-      transition: 0.3s;
-    }
+      .navbar-item {
+        color: #fff;
+        text-decoration: none;
+        font-weight: 500;
+        transition: 0.3s;
+      }
 
-    .navbar-item:hover {
-      color: #ffe57f;
-    }
+      .navbar-item:hover {
+        color: #ffe57f;
+      }
 
-    .contact-card {
-      margin-top: 30px;
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(15px);
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-      text-align: center;
-      color: #fff;
-      max-width: 400px;
-      width: 90%;
-    }
+      .contact-card {
+        margin-top: 30px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(15px);
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        color: #fff;
+        max-width: 400px;
+        width: 90%;
+      }
 
-    .contact-card h1 {
-      font-size: 1.6rem;
-      margin-bottom: 15px;
-    }
+      .contact-card h1 {
+        font-size: 1.6rem;
+        margin-bottom: 15px;
+      }
 
-    .contact-info {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin: 15px 0;
-      font-size: 1.1rem;
-    }
+      .contact-info {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin: 15px 0;
+        font-size: 1.1rem;
+      }
 
-    .contact-info i {
-      font-size: 1.4rem;
-      color: #ffe57f;
-    }
+      .contact-info i {
+        font-size: 1.4rem;
+        color: #ffe57f;
+      }
 
-    .contact-info a {
-      color: #fff;
-      text-decoration: none;
-      transition: 0.3s;
-    }
+      .contact-info a {
+        color: #fff;
+        text-decoration: none;
+        transition: 0.3s;
+      }
 
-    .contact-info a:hover {
-      color: #ffe57f;
-    }
-  </style>
-</head>
-<body>
+      .contact-info a:hover {
+        color: #ffe57f;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-logo">
+        <a href="{{ url_for('dashboard') }}" style="text-decoration: none">
+          Pet Adoption Management System</a
+        >
+      </div>
+      <ul class="navbar-items">
+        <li><a href="{{url_for('dashboard')}}" class="navbar-item">Home</a></li>
+        <li>
+          <a href="{{url_for('profile')}}" class="navbar-item">Profile</a>
+        </li>
+        <li>
+          <a href="{{ url_for('logout') }}" class="navbar-item">Logout</a>
+        </li>
+      </ul>
+    </nav>
 
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div class="navbar-logo"><a href="{{ url_for('dashboard') }}"style="text-decoration: none;"> Pet Adoption Management System</a></div>
-    <ul class="navbar-items">
-      <li><a href="{{url_for('dashboard')}}" class="navbar-item">Home</a></li>
-      <li><a href="{{url_for('profile')}}" class="navbar-item">Profile</a></li>
-      <li><a href="{{ url_for('logout') }}" class="navbar-item">Logout</a></li>
-    </ul>
-  </nav>
+    <!-- Contact Card -->
+    <div class="contact-card">
+      <h1>Contact Us</h1>
 
-  <!-- Contact Card -->
-  <div class="contact-card">
-    <h1>Contact Us</h1>
+      <div class="contact-info">
+        <i class="bi bi-telephone-fill"></i>
+        <a href="tel:+918827598493">+91 88275 98493</a>
+      </div>
 
-    <div class="contact-info">
-      <i class="bi bi-telephone-fill"></i>
-      <a href="tel:+918827598493">+91 88275 98493</a>
+      <div class="contact-info">
+        <i class="bi bi-envelope-fill"></i>
+
+        <a
+          href="https://mail.google.com/mail/u/1/?view=cm&fs=1&to=rajmangal03@gmail.com&tf=1
+      "
+          >owner.petwala@gmail.com</a
+        >
+      </div>
+
+      <p>
+        We are here to help you with any queries regarding Pet Adoption and
+        Donation.
+      </p>
     </div>
 
-    <div class="contact-info">
-      <i class="bi bi-envelope-fill"></i>
-
-    <a href="https://mail.google.com/mail/u/1/?view=cm&fs=1&to=rajmangal03@gmail.com&tf=1
-      ">rajmangal03@gmail.com</a>
-
-    </div>
-
-    <p>We are here to help you with any queries regarding Pet Adoption!</p>
-  </div>
-
-</body>
+    <h2>Privacy & Security Commitment:</h2>
+    <p>
+      We are committed to protecting your privacy. Our platform uses end-to-end
+      encryption, which means your data is encrypted from sender to recipient
+      and cannot be accessed by anyone — including us. We do not store, monitor,
+      or retain any personal or sensitive user data. Your information stays
+      strictly yours.
+    </p>
+  </body>
 </html>

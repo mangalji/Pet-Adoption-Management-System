@@ -845,11 +845,6 @@ def adopter_profile(adopterid):
 
 	return render_template('other_person_profile.html',username=user_data['name'],city=user_data['city'],donated_pets=donated_pets,adopted_pets=adopted_pets)
 
-# @registered.connect_via(app)
-# def after_registered(sender, user_data, **extra):
-# 	print(f"user registered: {user_data['username']} at {user_data['created_at']}! successfully")
-# 	flash(f"user registered: {user_data['username']} at {user_data['created_at']}! successfully","success")	
-
 # this is a signal for creating the call request 
 @call_request_created.connect_via(app)
 def on_call_request_created(sender,request_data,**extra):
@@ -907,7 +902,6 @@ def after_pet_donated(sender,transaction_data,**extra):
 
 # this is our main function of the project
 if __name__ == "__main__":
-
 	app.run(debug=True)
 
 
